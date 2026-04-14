@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mvn test:*)"
+      "Bash(mvn test:*)",
+      "Bash(wc -l c:/Users/d-lamont.dozier/VSCodeProjects/asqp-reader/src/main/java/com/lamontd/asqp/index/*.java)"
     ]
   }
 }

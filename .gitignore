@@ -1,1 +1,44 @@
-/target
+# Java-related files
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+
+# Maven-specific files
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+dependency-reduced-pom.xml
+
+# Gradle-specific files
+gradle/
+build/
+!gradle-wrapper.jar
+
+# IntelliJ IDEA-specific files
+idea/
+*.iml
+out/
+
+# Eclipse-specific files
+project
+classpath
+settings/
+bin/
+
+# TestNG-specific files
+test-output/
+*.log
+
+# OS-specific files
+DS_Store
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Miscellaneous
+vscode/
