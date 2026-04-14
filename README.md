@@ -89,7 +89,7 @@ This creates an executable JAR with all dependencies at `target/asqp-reader.jar`
 mvn clean package -DskipTests
 ```
 
-See [BUILD_AND_DEPLOY.md](BUILD_AND_DEPLOY.md) for complete build and deployment instructions.
+See [docs/BUILD.md](docs/BUILD.md) for complete build and deployment instructions.
 
 ## Running Tests
 
@@ -171,7 +171,7 @@ The `CarrierCodeMapper` provides translation between 2-letter airline codes (e.g
 - **Rich Data:** IATA/ICAO codes, callsigns, country, active status
 - **Auto-updated:** Download latest from [OpenFlights GitHub](https://github.com/jpatokal/openflights)
 
-See [OPENFLIGHTS_INTEGRATION.md](OPENFLIGHTS_INTEGRATION.md) for detailed information.
+See [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) for detailed information.
 
 ### Loading Carrier Data
 
@@ -234,7 +234,7 @@ curl -o src/main/resources/data/airlines.dat \
 - **Bureau of Transportation Statistics (BTS)** - Official US carrier data
 - **IATA** - International airline codes (requires subscription)
 
-See [CARRIER_DATA_SOURCES.md](CARRIER_DATA_SOURCES.md) and [OPENFLIGHTS_INTEGRATION.md](OPENFLIGHTS_INTEGRATION.md) for more information.
+See [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) for more information.
 
 ## Airport Code Mapping
 
@@ -274,7 +274,7 @@ List<AirportInfo> nyAirports = mapper.getAirportsByCity("New York");  // [JFK, L
 List<AirportInfo> results = mapper.searchByName("International");
 ```
 
-See [AIRPORT_INTEGRATION.md](AIRPORT_INTEGRATION.md) for complete documentation.
+See [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) for complete documentation.
 
 ## Country Code Mapping
 
@@ -314,7 +314,7 @@ System.out.println("Alpha-3: " + country.getAlpha3Upper());  // "USA"
 System.out.println("Name: " + country.getName());            // "United States of America"
 ```
 
-See [COUNTRY_INTEGRATION.md](COUNTRY_INTEGRATION.md) for complete documentation.
+See [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) for complete documentation.
 
 ## Data Quality Checks
 
@@ -337,7 +337,7 @@ WARNING: Found 2 flight(s) with arrival before departure:
   (Note: These may be flights crossing midnight)
 ```
 
-See [DATA_QUALITY_VALIDATION.md](DATA_QUALITY_VALIDATION.md) for complete documentation on validation checks.
+See [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) for complete documentation on validation checks.
 
 ## Validation Rules
 
@@ -353,8 +353,28 @@ Invalid records are logged and skipped, allowing the reader to process the rest 
 ## Dependencies
 
 - **Apache Commons CSV 1.12.0**: CSV parsing
+- **Google Gson 2.11.0**: JSON parsing
 - **JUnit Jupiter 5.11.4**: Testing framework
 - **Java 23**: Modern Java features and APIs
+
+## Data Preprocessing
+
+For processing raw BTS ASQP 234 data files, use the included Python script:
+
+```bash
+python src/main/scripts/asqp_bulk_data_groomer.py ./raw_data ./processed_data
+```
+
+This reduces file sizes by 60-70% by extracting only the necessary fields. See [docs/DATA_GROOMER.md](docs/DATA_GROOMER.md) for details.
+
+## Documentation
+
+- **[README.md](README.md)** - This file (getting started and overview)
+- **[docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)** - Complete API reference and integration guide
+- **[docs/DATA_SOURCES.md](docs/DATA_SOURCES.md)** - Information about data sources (OpenFlights, BTS, ISO 3166-1)
+- **[docs/DATA_GROOMER.md](docs/DATA_GROOMER.md)** - Data preprocessing script documentation
+- **[docs/BUILD.md](docs/BUILD.md)** - Building, testing, and deployment instructions
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and migration notes
 
 ## License
 
