@@ -4,7 +4,7 @@ import com.lamontd.travel.flight.util.FlightDataIndex;
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
 import com.lamontd.travel.flight.mapper.CancellationCodeMapper;
 import com.lamontd.travel.flight.mapper.CarrierCodeMapper;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -59,7 +59,7 @@ public class FlightView implements ViewRenderer {
         String flightNumber = parts[1];
 
         // Use indexed lookup - O(1)
-        List<FlightRecord> flightRecords = index.getByFlightNumber(carrierCode, flightNumber);
+        List<ASQPFlightRecord> flightRecords = index.getByFlightNumber(carrierCode, flightNumber);
 
         if (flightRecords.isEmpty()) {
             System.out.println("\nNo flights found for: " + carrierCode + " " + flightNumber);
@@ -73,9 +73,9 @@ public class FlightView implements ViewRenderer {
         System.out.println("-".repeat(50));
 
         // Group by departure date
-        Map<LocalDate, List<FlightRecord>> flightsByDate = flightRecords.stream()
+        Map<LocalDate, List<ASQPFlightRecord>> flightsByDate = flightRecords.stream()
                 .collect(Collectors.groupingBy(
-                        FlightRecord::getDepartureDate,
+                        ASQPFlightRecord::getDepartureDate,
                         TreeMap::new,
                         Collectors.toList()
                 ));
@@ -86,9 +86,9 @@ public class FlightView implements ViewRenderer {
         System.out.println("=".repeat(50));
 
         Map<String, RouteInfo> routeInfoMap = new LinkedHashMap<>();
-        for (List<FlightRecord> dailyLegs : flightsByDate.values()) {
+        for (List<ASQPFlightRecord> dailyLegs : flightsByDate.values()) {
             // Sort legs by departure time
-            List<FlightRecord> sortedLegs = dailyLegs.stream()
+            List<ASQPFlightRecord> sortedLegs = dailyLegs.stream()
                     .sorted(Comparator.comparing(r -> r.getScheduledCrsDeparture() != null ?
                             r.getScheduledCrsDeparture() : LocalTime.MIN))
                     .toList();
@@ -97,7 +97,7 @@ public class FlightView implements ViewRenderer {
             StringBuilder routeBuilder = new StringBuilder();
             double routeDistance = 0;
             for (int i = 0; i < sortedLegs.size(); i++) {
-                FlightRecord leg = sortedLegs.get(i);
+                ASQPFlightRecord leg = sortedLegs.get(i);
                 if (i == 0) {
                     routeBuilder.append(leg.getOrigin());
                 }
@@ -127,23 +127,23 @@ public class FlightView implements ViewRenderer {
         System.out.println("DAILY FLIGHT REPORT");
         System.out.println("=".repeat(50));
 
-        for (Map.Entry<LocalDate, List<FlightRecord>> entry : flightsByDate.entrySet()) {
+        for (Map.Entry<LocalDate, List<ASQPFlightRecord>> entry : flightsByDate.entrySet()) {
             LocalDate date = entry.getKey();
-            List<FlightRecord> dailyLegs = entry.getValue();
+            List<ASQPFlightRecord> dailyLegs = entry.getValue();
 
             // Sort legs by departure time
             dailyLegs.sort(Comparator.comparing(r -> r.getGateDeparture().orElse(LocalTime.MIN)));
 
             // Check if cancelled
-            boolean allCancelled = dailyLegs.stream().allMatch(FlightRecord::isCancelled);
-            boolean anyCancelled = dailyLegs.stream().anyMatch(FlightRecord::isCancelled);
+            boolean allCancelled = dailyLegs.stream().allMatch(ASQPFlightRecord::isCancelled);
+            boolean anyCancelled = dailyLegs.stream().anyMatch(ASQPFlightRecord::isCancelled);
 
             System.out.print("\n  " + date + ":");
 
             // Build the route chain (show for both operated and cancelled)
             StringBuilder route = new StringBuilder();
             for (int i = 0; i < dailyLegs.size(); i++) {
-                FlightRecord leg = dailyLegs.get(i);
+                ASQPFlightRecord leg = dailyLegs.get(i);
                 if (i == 0) {
                     route.append(leg.getOrigin());
                 }
@@ -154,7 +154,7 @@ public class FlightView implements ViewRenderer {
                 System.out.println(" CANCELLED");
                 System.out.println("    Scheduled Route: " + route);
                 if (!dailyLegs.isEmpty()) {
-                    FlightRecord first = dailyLegs.get(0);
+                    ASQPFlightRecord first = dailyLegs.get(0);
                     String reason = first.getCancellationCode()
                             .map(cancellationMapper::getFullDescription)
                             .orElse("Unknown reason");
@@ -165,7 +165,7 @@ public class FlightView implements ViewRenderer {
                 System.out.println("    Route: " + route);
 
                 if (anyCancelled) {
-                    long cancelledLegs = dailyLegs.stream().filter(FlightRecord::isCancelled).count();
+                    long cancelledLegs = dailyLegs.stream().filter(ASQPFlightRecord::isCancelled).count();
                     System.out.println("    Note: " + cancelledLegs + " leg(s) cancelled");
                 }
             }
@@ -173,7 +173,7 @@ public class FlightView implements ViewRenderer {
             // Show detailed leg information (for both operated and cancelled)
             System.out.println("    Details:");
             for (int i = 0; i < dailyLegs.size(); i++) {
-                FlightRecord leg = dailyLegs.get(i);
+                ASQPFlightRecord leg = dailyLegs.get(i);
                 String originCity = airportMapper.getAirportCity(leg.getOrigin());
                 String destCity = airportMapper.getAirportCity(leg.getDestination());
 
@@ -212,11 +212,11 @@ public class FlightView implements ViewRenderer {
                 .filter(legs -> legs.stream().anyMatch(l -> !l.isCancelled()))
                 .count();
         long totalCancelled = flightsByDate.values().stream()
-                .filter(legs -> legs.stream().allMatch(FlightRecord::isCancelled))
+                .filter(legs -> legs.stream().allMatch(ASQPFlightRecord::isCancelled))
                 .count();
 
         // Calculate on-time performance (within 15 minutes of scheduled time)
-        List<FlightRecord> operatedFlights = flightsByDate.values().stream()
+        List<ASQPFlightRecord> operatedFlights = flightsByDate.values().stream()
                 .flatMap(List::stream)
                 .filter(r -> !r.isCancelled())
                 .toList();

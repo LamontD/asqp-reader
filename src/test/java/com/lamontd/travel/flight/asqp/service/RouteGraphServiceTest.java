@@ -1,7 +1,7 @@
 package com.lamontd.travel.flight.asqp.service;
 
 import com.lamontd.travel.flight.util.FlightDataIndex;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 import org.jgrapht.GraphPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,12 +29,12 @@ class RouteGraphServiceTest {
         // LAX -> ORD (direct)
         // So JFK -> ORD has two possible paths: JFK->BOS->ORD or JFK->LAX->ORD
 
-        List<FlightRecord> records = new ArrayList<>();
+        List<ASQPFlightRecord> records = new ArrayList<>();
         LocalDate date = LocalDate.of(2025, 1, 15);
         LocalTime time = LocalTime.of(10, 0);
 
         // JFK -> BOS (190 miles)
-        records.add(FlightRecord.builder()
+        records.add(ASQPFlightRecord.builder()
                 .carrierCode("AA")
                 .flightNumber("100")
                 .origin("JFK")
@@ -48,7 +48,7 @@ class RouteGraphServiceTest {
                 .build());
 
         // JFK -> LAX (2475 miles)
-        records.add(FlightRecord.builder()
+        records.add(ASQPFlightRecord.builder()
                 .carrierCode("AA")
                 .flightNumber("200")
                 .origin("JFK")
@@ -62,7 +62,7 @@ class RouteGraphServiceTest {
                 .build());
 
         // BOS -> ORD (864 miles)
-        records.add(FlightRecord.builder()
+        records.add(ASQPFlightRecord.builder()
                 .carrierCode("AA")
                 .flightNumber("300")
                 .origin("BOS")
@@ -76,7 +76,7 @@ class RouteGraphServiceTest {
                 .build());
 
         // LAX -> ORD (1745 miles)
-        records.add(FlightRecord.builder()
+        records.add(ASQPFlightRecord.builder()
                 .carrierCode("AA")
                 .flightNumber("400")
                 .origin("LAX")

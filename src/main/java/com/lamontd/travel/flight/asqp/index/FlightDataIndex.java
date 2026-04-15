@@ -3,7 +3,7 @@ package com.lamontd.travel.flight.util;
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
 import com.lamontd.travel.flight.mapper.CarrierCodeMapper;
 import com.lamontd.travel.flight.mapper.CountryCodeMapper;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -13,16 +13,16 @@ import java.util.stream.Collectors;
  * Pre-computed indices for efficient data access
  */
 public class FlightDataIndex {
-    public final List<FlightRecord> allRecords;
+    public final List<ASQPFlightRecord> allRecords;
     public final AirportCodeMapper airportMapper;
 
     // Indexed by various keys for O(1) or O(log n) lookups
-    public final Map<String, List<FlightRecord>> byCarrier;
-    public final Map<String, List<FlightRecord>> byOriginAirport;
-    public final Map<String, List<FlightRecord>> byDestinationAirport;
-    public final Map<String, List<FlightRecord>> byTailNumber;
-    public final Map<String, List<FlightRecord>> byFlightNumber;
-    public final Map<LocalDate, List<FlightRecord>> byDate;
+    public final Map<String, List<ASQPFlightRecord>> byCarrier;
+    public final Map<String, List<ASQPFlightRecord>> byOriginAirport;
+    public final Map<String, List<ASQPFlightRecord>> byDestinationAirport;
+    public final Map<String, List<ASQPFlightRecord>> byTailNumber;
+    public final Map<String, List<ASQPFlightRecord>> byFlightNumber;
+    public final Map<LocalDate, List<ASQPFlightRecord>> byDate;
 
     // Pre-computed route distances (origin-destination -> distance in miles)
     public final Map<String, Double> routeDistances;
@@ -39,7 +39,7 @@ public class FlightDataIndex {
 
     private final DistanceCalculator distanceCalculator;
 
-    public FlightDataIndex(List<FlightRecord> records) {
+    public FlightDataIndex(List<ASQPFlightRecord> records) {
         this.allRecords = records;
         this.totalFlights = records.size();
         this.airportMapper = AirportCodeMapper.getDefault();
@@ -56,17 +56,17 @@ public class FlightDataIndex {
 
         // Build all indices in a single pass where possible
         this.byCarrier = records.stream()
-                .collect(Collectors.groupingBy(FlightRecord::getCarrierCode));
+                .collect(Collectors.groupingBy(ASQPFlightRecord::getCarrierCode));
 
         this.byOriginAirport = records.stream()
-                .collect(Collectors.groupingBy(FlightRecord::getOrigin));
+                .collect(Collectors.groupingBy(ASQPFlightRecord::getOrigin));
 
         this.byDestinationAirport = records.stream()
-                .collect(Collectors.groupingBy(FlightRecord::getDestination));
+                .collect(Collectors.groupingBy(ASQPFlightRecord::getDestination));
 
         this.byTailNumber = records.stream()
                 .filter(r -> r.getTailNumber() != null && !r.getTailNumber().isEmpty())
-                .collect(Collectors.groupingBy(FlightRecord::getTailNumber));
+                .collect(Collectors.groupingBy(ASQPFlightRecord::getTailNumber));
 
         this.byFlightNumber = records.stream()
                 .collect(Collectors.groupingBy(
@@ -74,7 +74,7 @@ public class FlightDataIndex {
                 ));
 
         this.byDate = records.stream()
-                .collect(Collectors.groupingBy(FlightRecord::getDepartureDate));
+                .collect(Collectors.groupingBy(ASQPFlightRecord::getDepartureDate));
 
         // Compute statistics once
         this.operatedFlights = records.stream()
@@ -89,12 +89,12 @@ public class FlightDataIndex {
                 ));
 
         this.minDate = records.stream()
-                .map(FlightRecord::getDepartureDate)
+                .map(ASQPFlightRecord::getDepartureDate)
                 .min(LocalDate::compareTo)
                 .orElse(null);
 
         this.maxDate = records.stream()
-                .map(FlightRecord::getDepartureDate)
+                .map(ASQPFlightRecord::getDepartureDate)
                 .max(LocalDate::compareTo)
                 .orElse(null);
 
@@ -123,19 +123,19 @@ public class FlightDataIndex {
                 byCarrier.size(), airports.size(), byTailNumber.size(), byFlightNumber.size(), byDate.size(), routeDistances.size());
     }
 
-    public List<FlightRecord> getByCarrier(String carrierCode) {
+    public List<ASQPFlightRecord> getByCarrier(String carrierCode) {
         return byCarrier.getOrDefault(carrierCode, Collections.emptyList());
     }
 
-    public List<FlightRecord> getByOriginAirport(String airportCode) {
+    public List<ASQPFlightRecord> getByOriginAirport(String airportCode) {
         return byOriginAirport.getOrDefault(airportCode, Collections.emptyList());
     }
 
-    public List<FlightRecord> getByTailNumber(String tailNumber) {
+    public List<ASQPFlightRecord> getByTailNumber(String tailNumber) {
         return byTailNumber.getOrDefault(tailNumber.toUpperCase(), Collections.emptyList());
     }
 
-    public List<FlightRecord> getByFlightNumber(String carrierCode, String flightNumber) {
+    public List<ASQPFlightRecord> getByFlightNumber(String carrierCode, String flightNumber) {
         return byFlightNumber.getOrDefault(carrierCode + flightNumber, Collections.emptyList());
     }
 

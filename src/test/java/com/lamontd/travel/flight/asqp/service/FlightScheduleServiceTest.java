@@ -1,7 +1,7 @@
 package com.lamontd.travel.flight.asqp.service;
 
 import com.lamontd.travel.flight.util.FlightDataIndex;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ class FlightScheduleServiceTest {
     @BeforeEach
     void setUp() {
         // Create a flight that operates Mon/Wed/Fri at 10:00 JFK->LAX
-        List<FlightRecord> records = new ArrayList<>();
+        List<ASQPFlightRecord> records = new ArrayList<>();
 
         // Monday flight (operated)
         records.add(createFlight(
@@ -71,13 +71,13 @@ class FlightScheduleServiceTest {
         scheduleService = new FlightScheduleService(index);
     }
 
-    private FlightRecord createFlight(String carrier, String flightNum,
+    private ASQPFlightRecord createFlight(String carrier, String flightNum,
                                      String origin, String dest,
                                      LocalDate date,
                                      LocalTime scheduledDep, LocalTime scheduledArr,
                                      boolean cancelled,
                                      LocalTime actualDep, LocalTime actualArr) {
-        FlightRecord.Builder builder = FlightRecord.builder()
+        ASQPFlightRecord.Builder builder = ASQPFlightRecord.builder()
                 .carrierCode(carrier)
                 .flightNumber(flightNum)
                 .origin(origin)

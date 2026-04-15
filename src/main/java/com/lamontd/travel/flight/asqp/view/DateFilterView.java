@@ -1,7 +1,7 @@
 package com.lamontd.travel.flight.asqp.view;
 
 import com.lamontd.travel.flight.util.FlightDataIndex;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -114,7 +114,7 @@ public class DateFilterView {
                 final LocalDate finalEndDate = parsedEndDate;
 
                 // Filter the data
-                List<FlightRecord> filteredRecords = originalIndex.allRecords.stream()
+                List<ASQPFlightRecord> filteredRecords = originalIndex.allRecords.stream()
                         .filter(r -> {
                             LocalDate flightDate = r.getDepartureDate();
                             boolean afterStart = finalStartDate == null || !flightDate.isBefore(finalStartDate);

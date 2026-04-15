@@ -2,7 +2,7 @@ package com.lamontd.travel.flight.reader;
 
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
 import com.lamontd.travel.flight.model.AirportInfo;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -29,10 +29,10 @@ class CsvFlightRecordReaderTest {
                 DL|5030|CVG|LGA|20250127|1700|1700|1658|1859|1859|1902|1716|1853|N917XJ||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = reader.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = reader.readFromReader(new StringReader(csv));
 
         assertEquals(1, records.size());
-        FlightRecord record = records.get(0);
+        ASQPFlightRecord record = records.get(0);
 
         assertEquals("DL", record.getCarrierCode());
         assertEquals("5030", record.getFlightNumber());
@@ -62,10 +62,10 @@ class CsvFlightRecordReaderTest {
                 DL|5030|LGA|CVG|20250105|1335|1335|0|1558|1558|0|0|0|N186GJ|B|0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = reader.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = reader.readFromReader(new StringReader(csv));
 
         assertEquals(1, records.size());
-        FlightRecord record = records.get(0);
+        ASQPFlightRecord record = records.get(0);
 
         assertEquals("DL", record.getCarrierCode());
         assertEquals("5030", record.getFlightNumber());
@@ -88,11 +88,11 @@ class CsvFlightRecordReaderTest {
                 DL|5030|LGA|CVG|20250105|1335|1335|0|1558|1558|0|0|0|N186GJ|B|0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = reader.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = reader.readFromReader(new StringReader(csv));
 
         assertEquals(3, records.size());
         assertEquals(2, records.stream().filter(r -> !r.isCancelled()).count());
-        assertEquals(1, records.stream().filter(FlightRecord::isCancelled).count());
+        assertEquals(1, records.stream().filter(ASQPFlightRecord::isCancelled).count());
     }
 
     @Test
@@ -103,10 +103,10 @@ class CsvFlightRecordReaderTest {
             return;
         }
 
-        List<FlightRecord> records = reader.readFromFile(samplePath);
+        List<ASQPFlightRecord> records = reader.readFromFile(samplePath);
 
         assertTrue(records.size() > 0, "Should have loaded records from sample file");
-        long cancelledCount = records.stream().filter(FlightRecord::isCancelled).count();
+        long cancelledCount = records.stream().filter(ASQPFlightRecord::isCancelled).count();
         System.out.println("Loaded " + records.size() + " records (" + cancelledCount + " cancelled)");
     }
 
@@ -117,10 +117,10 @@ class CsvFlightRecordReaderTest {
                 DL|5033|ILM|ATL|20250106|600|600|554|748|748|747|619|738|N303PQ||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = reader.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = reader.readFromReader(new StringReader(csv));
 
         assertEquals(1, records.size());
-        FlightRecord record = records.get(0);
+        ASQPFlightRecord record = records.get(0);
         assertEquals(LocalTime.of(6, 0), record.getScheduledOagDeparture());
         assertEquals(LocalTime.of(5, 54), record.getGateDeparture().get());
     }
@@ -132,7 +132,7 @@ class CsvFlightRecordReaderTest {
                 DL|5030|INVALID|LGA|20250127|1700|1700|1658|1859|1859|1902|1716|1853|N917XJ||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = reader.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = reader.readFromReader(new StringReader(csv));
         assertEquals(0, records.size(), "Invalid airport code should be skipped");
     }
 
@@ -143,7 +143,7 @@ class CsvFlightRecordReaderTest {
                 ||CVG|LGA|20250127|1700|1700|1658|1859|1859|1902|1716|1853|N917XJ||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = reader.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = reader.readFromReader(new StringReader(csv));
         assertEquals(0, records.size(), "Record with missing carrier code should be skipped");
     }
 
@@ -154,7 +154,7 @@ class CsvFlightRecordReaderTest {
                 DL|5030|CVG|LGA|2025-01-27|1700|1700|1658|1859|1859|1902|1716|1853|N917XJ||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = reader.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = reader.readFromReader(new StringReader(csv));
         assertEquals(0, records.size(), "Record with invalid date format should be skipped");
     }
 
@@ -188,10 +188,10 @@ class CsvFlightRecordReaderTest {
                 DL|5030|CVG|LGA|20250127|1700|1700|1658|1859|1859|1902|1716|1853|N917XJ||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = readerWithMapper.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = readerWithMapper.readFromReader(new StringReader(csv));
 
         assertEquals(1, records.size());
-        FlightRecord record = records.get(0);
+        ASQPFlightRecord record = records.get(0);
 
         // Verify UTC times are calculated
         assertTrue(record.getUtcGateDeparture().isPresent(), "UTC gate departure should be calculated");
@@ -236,10 +236,10 @@ class CsvFlightRecordReaderTest {
                 DL|5035|CVG|LGA|20250111|2300|2300|2333|100|100|131|2351|128|N918XJ||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = readerWithMapper.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = readerWithMapper.readFromReader(new StringReader(csv));
 
         assertEquals(1, records.size());
-        FlightRecord record = records.get(0);
+        ASQPFlightRecord record = records.get(0);
 
         assertTrue(record.getUtcGateDeparture().isPresent());
         assertTrue(record.getUtcGateArrival().isPresent());
@@ -265,10 +265,10 @@ class CsvFlightRecordReaderTest {
                 DL|5030|CVG|LGA|20250127|1700|1700|1658|1859|1859|1902|1716|1853|N917XJ||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = readerNoMapper.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = readerNoMapper.readFromReader(new StringReader(csv));
 
         assertEquals(1, records.size());
-        FlightRecord record = records.get(0);
+        ASQPFlightRecord record = records.get(0);
 
         assertFalse(record.getUtcGateDeparture().isPresent(), "UTC times should not be calculated without mapper");
         assertFalse(record.getUtcGateArrival().isPresent(), "UTC times should not be calculated without mapper");
@@ -302,10 +302,10 @@ class CsvFlightRecordReaderTest {
                 DL|5030|CVG|LGA|20250127|1700|1700|1658|1859|1859|1902|1716|1853|N917XJ||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = readerWithMapper.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = readerWithMapper.readFromReader(new StringReader(csv));
 
         assertEquals(1, records.size());
-        FlightRecord record = records.get(0);
+        ASQPFlightRecord record = records.get(0);
 
         // Verify all UTC times are calculated
         assertTrue(record.getUtcGateDeparture().isPresent(), "UTC gate departure should be calculated");
@@ -360,10 +360,10 @@ class CsvFlightRecordReaderTest {
                 DL|5035|CVG|LGA|20250111|2300|2300|2333|100|100|131|2351|128|N918XJ||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = readerWithMapper.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = readerWithMapper.readFromReader(new StringReader(csv));
 
         assertEquals(1, records.size());
-        FlightRecord record = records.get(0);
+        ASQPFlightRecord record = records.get(0);
 
         assertTrue(record.getUtcWheelsUp().isPresent());
         assertTrue(record.getUtcWheelsDown().isPresent());
@@ -414,10 +414,10 @@ class CsvFlightRecordReaderTest {
                 DL|100|LAX|JFK|20250115|2200|2200|2300|630|630|730|2315|715|N123AB||0|0|0|0|0
                 """;
 
-        List<FlightRecord> records = readerWithMapper.readFromReader(new StringReader(csv));
+        List<ASQPFlightRecord> records = readerWithMapper.readFromReader(new StringReader(csv));
 
         assertEquals(1, records.size());
-        FlightRecord record = records.get(0);
+        ASQPFlightRecord record = records.get(0);
 
         assertTrue(record.getUtcGateDeparture().isPresent());
         assertTrue(record.getUtcGateArrival().isPresent());

@@ -3,7 +3,7 @@ package com.lamontd.travel.flight.asqp.view;
 import com.lamontd.travel.flight.util.FlightDataIndex;
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
 import com.lamontd.travel.flight.mapper.CarrierCodeMapper;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 
 import java.util.List;
 import java.util.Map;
@@ -42,7 +42,7 @@ public class CarrierView implements ViewRenderer {
         }
 
         // Use indexed lookup - O(1) instead of O(n)
-        List<FlightRecord> carrierFlights = index.getByCarrier(carrierCode);
+        List<ASQPFlightRecord> carrierFlights = index.getByCarrier(carrierCode);
 
         if (carrierFlights.isEmpty()) {
             System.out.println("\nNo flights found for carrier code: " + carrierCode);
@@ -58,7 +58,7 @@ public class CarrierView implements ViewRenderer {
         // Group by origin airport
         Map<String, Long> airportCounts = carrierFlights.stream()
                 .collect(Collectors.groupingBy(
-                        FlightRecord::getOrigin,
+                        ASQPFlightRecord::getOrigin,
                         Collectors.counting()
                 ));
 

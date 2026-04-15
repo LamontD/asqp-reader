@@ -6,57 +6,61 @@ import java.time.LocalTime;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Represents an observed flight - what actually happened for a specific flight instance.
+ * This is the information you would see on an airport display screen.
+ * Think of this as "what did happen" rather than "what should happen".
+ */
 public class FlightRecord {
+    // Flight identification
     private final String carrierCode;
     private final String flightNumber;
-    private final String origin;
-    private final String destination;
-    private final LocalDate departureDate;
-    private final LocalTime scheduledOagDeparture;
-    private final LocalTime scheduledCrsDeparture;
-    private final LocalTime gateDeparture;
-    private final LocalTime scheduledArrival;
-    private final LocalTime scheduledCrsArrival;
-    private final LocalTime gateArrival;
-    private final LocalTime wheelsUp;
-    private final LocalTime wheelsDown;
+    private final LocalDate operatingDate;
+
+    // Route information
+    private final String originAirport;
+    private final String destinationAirport;
+
+    // Aircraft information
     private final String tailNumber;
+
+    // Actual times (all optional as flight may not have operated)
+    private final LocalTime actualDepartureTime;
+    private final LocalTime actualArrivalTime;
+    private final LocalTime wheelsUpTime;
+    private final LocalTime wheelsDownTime;
+
+    // UTC times for cross-timezone analysis
+    private final Instant utcDepartureTime;
+    private final Instant utcArrivalTime;
+    private final Instant utcWheelsUpTime;
+    private final Instant utcWheelsDownTime;
+
+    // Status information
+    private final FlightStatus status;
     private final String cancellationCode;
-    private final Instant utcGateDeparture;
-    private final Instant utcGateArrival;
-    private final Instant utcWheelsUp;
-    private final Instant utcWheelsDown;
-    private final Integer carrierDelay;
-    private final Integer weatherDelay;
-    private final Integer nasDelay;
-    private final Integer securityDelay;
-    private final Integer lateArrivalDelay;
+
+    // Delay information
+    private final DelayInfo delayInfo;
 
     private FlightRecord(Builder builder) {
         this.carrierCode = builder.carrierCode;
         this.flightNumber = builder.flightNumber;
-        this.origin = builder.origin;
-        this.destination = builder.destination;
-        this.departureDate = builder.departureDate;
-        this.scheduledOagDeparture = builder.scheduledOagDeparture;
-        this.scheduledCrsDeparture = builder.scheduledCrsDeparture;
-        this.gateDeparture = builder.gateDeparture;
-        this.scheduledArrival = builder.scheduledArrival;
-        this.scheduledCrsArrival = builder.scheduledCrsArrival;
-        this.gateArrival = builder.gateArrival;
-        this.wheelsUp = builder.wheelsUp;
-        this.wheelsDown = builder.wheelsDown;
+        this.operatingDate = builder.operatingDate;
+        this.originAirport = builder.originAirport;
+        this.destinationAirport = builder.destinationAirport;
         this.tailNumber = builder.tailNumber;
+        this.actualDepartureTime = builder.actualDepartureTime;
+        this.actualArrivalTime = builder.actualArrivalTime;
+        this.wheelsUpTime = builder.wheelsUpTime;
+        this.wheelsDownTime = builder.wheelsDownTime;
+        this.utcDepartureTime = builder.utcDepartureTime;
+        this.utcArrivalTime = builder.utcArrivalTime;
+        this.utcWheelsUpTime = builder.utcWheelsUpTime;
+        this.utcWheelsDownTime = builder.utcWheelsDownTime;
+        this.status = builder.status != null ? builder.status : FlightStatus.SCHEDULED;
         this.cancellationCode = builder.cancellationCode;
-        this.utcGateDeparture = builder.utcGateDeparture;
-        this.utcGateArrival = builder.utcGateArrival;
-        this.utcWheelsUp = builder.utcWheelsUp;
-        this.utcWheelsDown = builder.utcWheelsDown;
-        this.carrierDelay = builder.carrierDelay;
-        this.weatherDelay = builder.weatherDelay;
-        this.nasDelay = builder.nasDelay;
-        this.securityDelay = builder.securityDelay;
-        this.lateArrivalDelay = builder.lateArrivalDelay;
+        this.delayInfo = builder.delayInfo;
     }
 
     public String getCarrierCode() {
@@ -67,52 +71,56 @@ public class FlightRecord {
         return flightNumber;
     }
 
-    public String getOrigin() {
-        return origin;
+    public LocalDate getOperatingDate() {
+        return operatingDate;
     }
 
-    public String getDestination() {
-        return destination;
+    public String getOriginAirport() {
+        return originAirport;
     }
 
-    public LocalDate getDepartureDate() {
-        return departureDate;
+    public String getDestinationAirport() {
+        return destinationAirport;
     }
 
-    public LocalTime getScheduledOagDeparture() {
-        return scheduledOagDeparture;
+    public Optional<String> getTailNumber() {
+        return Optional.ofNullable(tailNumber);
     }
 
-    public LocalTime getScheduledCrsDeparture() {
-        return scheduledCrsDeparture;
+    public Optional<LocalTime> getActualDepartureTime() {
+        return Optional.ofNullable(actualDepartureTime);
     }
 
-    public Optional<LocalTime> getGateDeparture() {
-        return Optional.ofNullable(gateDeparture);
+    public Optional<LocalTime> getActualArrivalTime() {
+        return Optional.ofNullable(actualArrivalTime);
     }
 
-    public LocalTime getScheduledArrival() {
-        return scheduledArrival;
+    public Optional<LocalTime> getWheelsUpTime() {
+        return Optional.ofNullable(wheelsUpTime);
     }
 
-    public LocalTime getScheduledCrsArrival() {
-        return scheduledCrsArrival;
+    public Optional<LocalTime> getWheelsDownTime() {
+        return Optional.ofNullable(wheelsDownTime);
     }
 
-    public Optional<LocalTime> getGateArrival() {
-        return Optional.ofNullable(gateArrival);
+    public Optional<Instant> getUtcDepartureTime() {
+        return Optional.ofNullable(utcDepartureTime);
     }
 
-    public Optional<LocalTime> getWheelsUp() {
-        return Optional.ofNullable(wheelsUp);
+    public Optional<Instant> getUtcArrivalTime() {
+        return Optional.ofNullable(utcArrivalTime);
     }
 
-    public Optional<LocalTime> getWheelsDown() {
-        return Optional.ofNullable(wheelsDown);
+    public Optional<Instant> getUtcWheelsUpTime() {
+        return Optional.ofNullable(utcWheelsUpTime);
     }
 
-    public String getTailNumber() {
-        return tailNumber;
+    public Optional<Instant> getUtcWheelsDownTime() {
+        return Optional.ofNullable(utcWheelsDownTime);
+    }
+
+    public FlightStatus getStatus() {
+        return status;
     }
 
     public Optional<String> getCancellationCode() {
@@ -120,61 +128,25 @@ public class FlightRecord {
     }
 
     public boolean isCancelled() {
-        return cancellationCode != null && !cancellationCode.trim().isEmpty();
+        return status == FlightStatus.CANCELLED;
     }
 
-    public Optional<Instant> getUtcGateDeparture() {
-        return Optional.ofNullable(utcGateDeparture);
-    }
-
-    public Optional<Instant> getUtcGateArrival() {
-        return Optional.ofNullable(utcGateArrival);
-    }
-
-    public Optional<Instant> getUtcWheelsUp() {
-        return Optional.ofNullable(utcWheelsUp);
-    }
-
-    public Optional<Instant> getUtcWheelsDown() {
-        return Optional.ofNullable(utcWheelsDown);
-    }
-
-    public Optional<Integer> getCarrierDelay() {
-        return Optional.ofNullable(carrierDelay);
-    }
-
-    public Optional<Integer> getWeatherDelay() {
-        return Optional.ofNullable(weatherDelay);
-    }
-
-    public Optional<Integer> getNasDelay() {
-        return Optional.ofNullable(nasDelay);
-    }
-
-    public Optional<Integer> getSecurityDelay() {
-        return Optional.ofNullable(securityDelay);
-    }
-
-    public Optional<Integer> getLateArrivalDelay() {
-        return Optional.ofNullable(lateArrivalDelay);
+    public Optional<DelayInfo> getDelayInfo() {
+        return Optional.ofNullable(delayInfo);
     }
 
     /**
-     * Gets the total delay in minutes across all delay categories
+     * Returns a unique key for this flight instance (carrier + flight number + date)
      */
-    public int getTotalDelay() {
-        return getCarrierDelay().orElse(0) +
-               getWeatherDelay().orElse(0) +
-               getNasDelay().orElse(0) +
-               getSecurityDelay().orElse(0) +
-               getLateArrivalDelay().orElse(0);
+    public String getFlightKey() {
+        return String.format("%s%s-%s", carrierCode, flightNumber, operatingDate);
     }
 
     /**
-     * Checks if this flight has any delay
+     * Returns the route key (carrier + flight number + origin + destination)
      */
-    public boolean hasDelay() {
-        return getTotalDelay() > 0;
+    public String getRouteKey() {
+        return String.format("%s%s-%s-%s", carrierCode, flightNumber, originAirport, destinationAirport);
     }
 
     @Override
@@ -184,49 +156,24 @@ public class FlightRecord {
         FlightRecord that = (FlightRecord) o;
         return Objects.equals(carrierCode, that.carrierCode) &&
                 Objects.equals(flightNumber, that.flightNumber) &&
-                Objects.equals(origin, that.origin) &&
-                Objects.equals(destination, that.destination) &&
-                Objects.equals(departureDate, that.departureDate) &&
-                Objects.equals(scheduledOagDeparture, that.scheduledOagDeparture) &&
-                Objects.equals(scheduledCrsDeparture, that.scheduledCrsDeparture) &&
-                Objects.equals(gateDeparture, that.gateDeparture) &&
-                Objects.equals(scheduledArrival, that.scheduledArrival) &&
-                Objects.equals(scheduledCrsArrival, that.scheduledCrsArrival) &&
-                Objects.equals(gateArrival, that.gateArrival) &&
-                Objects.equals(wheelsUp, that.wheelsUp) &&
-                Objects.equals(wheelsDown, that.wheelsDown) &&
-                Objects.equals(tailNumber, that.tailNumber) &&
-                Objects.equals(cancellationCode, that.cancellationCode) &&
-                Objects.equals(utcGateDeparture, that.utcGateDeparture) &&
-                Objects.equals(utcGateArrival, that.utcGateArrival) &&
-                Objects.equals(utcWheelsUp, that.utcWheelsUp) &&
-                Objects.equals(utcWheelsDown, that.utcWheelsDown) &&
-                Objects.equals(carrierDelay, that.carrierDelay) &&
-                Objects.equals(weatherDelay, that.weatherDelay) &&
-                Objects.equals(nasDelay, that.nasDelay) &&
-                Objects.equals(securityDelay, that.securityDelay) &&
-                Objects.equals(lateArrivalDelay, that.lateArrivalDelay);
+                Objects.equals(operatingDate, that.operatingDate) &&
+                Objects.equals(originAirport, that.originAirport) &&
+                Objects.equals(destinationAirport, that.destinationAirport);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(carrierCode, flightNumber, origin, destination, departureDate,
-                scheduledOagDeparture, scheduledCrsDeparture, gateDeparture,
-                scheduledArrival, scheduledCrsArrival, gateArrival,
-                wheelsUp, wheelsDown, tailNumber, cancellationCode,
-                utcGateDeparture, utcGateArrival, utcWheelsUp, utcWheelsDown,
-                carrierDelay, weatherDelay, nasDelay, securityDelay, lateArrivalDelay);
+        return Objects.hash(carrierCode, flightNumber, operatingDate, originAirport, destinationAirport);
     }
 
     @Override
     public String toString() {
         return "FlightRecord{" +
-                "carrierCode='" + carrierCode + '\'' +
+                "carrier='" + carrierCode + '\'' +
                 ", flightNumber='" + flightNumber + '\'' +
-                ", origin='" + origin + '\'' +
-                ", destination='" + destination + '\'' +
-                ", departureDate=" + departureDate +
-                ", cancelled=" + isCancelled() +
+                ", date=" + operatingDate +
+                ", route=" + originAirport + "-" + destinationAirport +
+                ", status=" + status +
                 '}';
     }
 
@@ -237,28 +184,21 @@ public class FlightRecord {
     public static class Builder {
         private String carrierCode;
         private String flightNumber;
-        private String origin;
-        private String destination;
-        private LocalDate departureDate;
-        private LocalTime scheduledOagDeparture;
-        private LocalTime scheduledCrsDeparture;
-        private LocalTime gateDeparture;
-        private LocalTime scheduledArrival;
-        private LocalTime scheduledCrsArrival;
-        private LocalTime gateArrival;
-        private LocalTime wheelsUp;
-        private LocalTime wheelsDown;
+        private LocalDate operatingDate;
+        private String originAirport;
+        private String destinationAirport;
         private String tailNumber;
+        private LocalTime actualDepartureTime;
+        private LocalTime actualArrivalTime;
+        private LocalTime wheelsUpTime;
+        private LocalTime wheelsDownTime;
+        private Instant utcDepartureTime;
+        private Instant utcArrivalTime;
+        private Instant utcWheelsUpTime;
+        private Instant utcWheelsDownTime;
+        private FlightStatus status;
         private String cancellationCode;
-        private Instant utcGateDeparture;
-        private Instant utcGateArrival;
-        private Instant utcWheelsUp;
-        private Instant utcWheelsDown;
-        private Integer carrierDelay;
-        private Integer weatherDelay;
-        private Integer nasDelay;
-        private Integer securityDelay;
-        private Integer lateArrivalDelay;
+        private DelayInfo delayInfo;
 
         public Builder carrierCode(String carrierCode) {
             this.carrierCode = carrierCode;
@@ -270,58 +210,18 @@ public class FlightRecord {
             return this;
         }
 
-        public Builder origin(String origin) {
-            this.origin = origin;
+        public Builder operatingDate(LocalDate operatingDate) {
+            this.operatingDate = operatingDate;
             return this;
         }
 
-        public Builder destination(String destination) {
-            this.destination = destination;
+        public Builder originAirport(String originAirport) {
+            this.originAirport = originAirport;
             return this;
         }
 
-        public Builder departureDate(LocalDate departureDate) {
-            this.departureDate = departureDate;
-            return this;
-        }
-
-        public Builder scheduledOagDeparture(LocalTime scheduledOagDeparture) {
-            this.scheduledOagDeparture = scheduledOagDeparture;
-            return this;
-        }
-
-        public Builder scheduledCrsDeparture(LocalTime scheduledCrsDeparture) {
-            this.scheduledCrsDeparture = scheduledCrsDeparture;
-            return this;
-        }
-
-        public Builder gateDeparture(LocalTime gateDeparture) {
-            this.gateDeparture = gateDeparture;
-            return this;
-        }
-
-        public Builder scheduledArrival(LocalTime scheduledArrival) {
-            this.scheduledArrival = scheduledArrival;
-            return this;
-        }
-
-        public Builder scheduledCrsArrival(LocalTime scheduledCrsArrival) {
-            this.scheduledCrsArrival = scheduledCrsArrival;
-            return this;
-        }
-
-        public Builder gateArrival(LocalTime gateArrival) {
-            this.gateArrival = gateArrival;
-            return this;
-        }
-
-        public Builder wheelsUp(LocalTime wheelsUp) {
-            this.wheelsUp = wheelsUp;
-            return this;
-        }
-
-        public Builder wheelsDown(LocalTime wheelsDown) {
-            this.wheelsDown = wheelsDown;
+        public Builder destinationAirport(String destinationAirport) {
+            this.destinationAirport = destinationAirport;
             return this;
         }
 
@@ -330,58 +230,155 @@ public class FlightRecord {
             return this;
         }
 
+        public Builder actualDepartureTime(LocalTime actualDepartureTime) {
+            this.actualDepartureTime = actualDepartureTime;
+            return this;
+        }
+
+        public Builder actualArrivalTime(LocalTime actualArrivalTime) {
+            this.actualArrivalTime = actualArrivalTime;
+            return this;
+        }
+
+        public Builder wheelsUpTime(LocalTime wheelsUpTime) {
+            this.wheelsUpTime = wheelsUpTime;
+            return this;
+        }
+
+        public Builder wheelsDownTime(LocalTime wheelsDownTime) {
+            this.wheelsDownTime = wheelsDownTime;
+            return this;
+        }
+
+        public Builder utcDepartureTime(Instant utcDepartureTime) {
+            this.utcDepartureTime = utcDepartureTime;
+            return this;
+        }
+
+        public Builder utcArrivalTime(Instant utcArrivalTime) {
+            this.utcArrivalTime = utcArrivalTime;
+            return this;
+        }
+
+        public Builder utcWheelsUpTime(Instant utcWheelsUpTime) {
+            this.utcWheelsUpTime = utcWheelsUpTime;
+            return this;
+        }
+
+        public Builder utcWheelsDownTime(Instant utcWheelsDownTime) {
+            this.utcWheelsDownTime = utcWheelsDownTime;
+            return this;
+        }
+
+        public Builder status(FlightStatus status) {
+            this.status = status;
+            return this;
+        }
+
         public Builder cancellationCode(String cancellationCode) {
             this.cancellationCode = cancellationCode;
             return this;
         }
 
-        public Builder utcGateDeparture(Instant utcGateDeparture) {
-            this.utcGateDeparture = utcGateDeparture;
-            return this;
-        }
-
-        public Builder utcGateArrival(Instant utcGateArrival) {
-            this.utcGateArrival = utcGateArrival;
-            return this;
-        }
-
-        public Builder utcWheelsUp(Instant utcWheelsUp) {
-            this.utcWheelsUp = utcWheelsUp;
-            return this;
-        }
-
-        public Builder utcWheelsDown(Instant utcWheelsDown) {
-            this.utcWheelsDown = utcWheelsDown;
-            return this;
-        }
-
-        public Builder carrierDelay(Integer carrierDelay) {
-            this.carrierDelay = carrierDelay;
-            return this;
-        }
-
-        public Builder weatherDelay(Integer weatherDelay) {
-            this.weatherDelay = weatherDelay;
-            return this;
-        }
-
-        public Builder nasDelay(Integer nasDelay) {
-            this.nasDelay = nasDelay;
-            return this;
-        }
-
-        public Builder securityDelay(Integer securityDelay) {
-            this.securityDelay = securityDelay;
-            return this;
-        }
-
-        public Builder lateArrivalDelay(Integer lateArrivalDelay) {
-            this.lateArrivalDelay = lateArrivalDelay;
+        public Builder delayInfo(DelayInfo delayInfo) {
+            this.delayInfo = delayInfo;
             return this;
         }
 
         public FlightRecord build() {
+            Objects.requireNonNull(carrierCode, "carrierCode is required");
+            Objects.requireNonNull(flightNumber, "flightNumber is required");
+            Objects.requireNonNull(operatingDate, "operatingDate is required");
+            Objects.requireNonNull(originAirport, "originAirport is required");
+            Objects.requireNonNull(destinationAirport, "destinationAirport is required");
             return new FlightRecord(this);
+        }
+    }
+
+    /**
+     * Enum representing the status of a flight
+     */
+    public enum FlightStatus {
+        SCHEDULED,      // Flight is scheduled but not yet departed
+        DEPARTED,       // Flight has departed
+        IN_FLIGHT,      // Flight is in the air
+        LANDED,         // Flight has landed
+        ARRIVED,        // Flight has arrived at gate
+        CANCELLED,      // Flight was cancelled
+        DIVERTED        // Flight was diverted to another airport
+    }
+
+    /**
+     * Represents delay information for a flight
+     */
+    public static class DelayInfo {
+        private final Integer carrierDelay;
+        private final Integer weatherDelay;
+        private final Integer nasDelay;
+        private final Integer securityDelay;
+        private final Integer lateAircraftDelay;
+
+        public DelayInfo(Integer carrierDelay, Integer weatherDelay, Integer nasDelay,
+                        Integer securityDelay, Integer lateAircraftDelay) {
+            this.carrierDelay = carrierDelay;
+            this.weatherDelay = weatherDelay;
+            this.nasDelay = nasDelay;
+            this.securityDelay = securityDelay;
+            this.lateAircraftDelay = lateAircraftDelay;
+        }
+
+        public Optional<Integer> getCarrierDelay() {
+            return Optional.ofNullable(carrierDelay);
+        }
+
+        public Optional<Integer> getWeatherDelay() {
+            return Optional.ofNullable(weatherDelay);
+        }
+
+        public Optional<Integer> getNasDelay() {
+            return Optional.ofNullable(nasDelay);
+        }
+
+        public Optional<Integer> getSecurityDelay() {
+            return Optional.ofNullable(securityDelay);
+        }
+
+        public Optional<Integer> getLateAircraftDelay() {
+            return Optional.ofNullable(lateAircraftDelay);
+        }
+
+        public int getTotalDelay() {
+            return getCarrierDelay().orElse(0) +
+                   getWeatherDelay().orElse(0) +
+                   getNasDelay().orElse(0) +
+                   getSecurityDelay().orElse(0) +
+                   getLateAircraftDelay().orElse(0);
+        }
+
+        public boolean hasDelay() {
+            return getTotalDelay() > 0;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DelayInfo delayInfo = (DelayInfo) o;
+            return Objects.equals(carrierDelay, delayInfo.carrierDelay) &&
+                    Objects.equals(weatherDelay, delayInfo.weatherDelay) &&
+                    Objects.equals(nasDelay, delayInfo.nasDelay) &&
+                    Objects.equals(securityDelay, delayInfo.securityDelay) &&
+                    Objects.equals(lateAircraftDelay, delayInfo.lateAircraftDelay);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(carrierDelay, weatherDelay, nasDelay, securityDelay, lateAircraftDelay);
+        }
+
+        @Override
+        public String toString() {
+            return "DelayInfo{total=" + getTotalDelay() + " min}";
         }
     }
 }

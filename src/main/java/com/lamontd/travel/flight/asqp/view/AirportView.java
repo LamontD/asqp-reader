@@ -3,7 +3,7 @@ package com.lamontd.travel.flight.asqp.view;
 import com.lamontd.travel.flight.util.FlightDataIndex;
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
 import com.lamontd.travel.flight.mapper.CancellationCodeMapper;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -31,7 +31,7 @@ public class AirportView implements ViewRenderer {
         }
 
         // Use indexed lookup - O(1) instead of O(n)
-        List<FlightRecord> airportFlights = index.getByOriginAirport(airportCode);
+        List<ASQPFlightRecord> airportFlights = index.getByOriginAirport(airportCode);
 
         if (airportFlights.isEmpty()) {
             System.out.println("\nNo flights found departing from airport: " + airportCode);
@@ -48,14 +48,14 @@ public class AirportView implements ViewRenderer {
         Map<LocalDate, Long> operatedByDate = airportFlights.stream()
                 .filter(r -> !r.isCancelled())
                 .collect(Collectors.groupingBy(
-                        FlightRecord::getDepartureDate,
+                        ASQPFlightRecord::getDepartureDate,
                         Collectors.counting()
                 ));
 
         Map<LocalDate, Long> cancelledByDate = airportFlights.stream()
-                .filter(FlightRecord::isCancelled)
+                .filter(ASQPFlightRecord::isCancelled)
                 .collect(Collectors.groupingBy(
-                        FlightRecord::getDepartureDate,
+                        ASQPFlightRecord::getDepartureDate,
                         Collectors.counting()
                 ));
 
@@ -95,7 +95,7 @@ public class AirportView implements ViewRenderer {
         // Cancellation breakdown by reason
         if (totalCancelled > 0) {
             Map<String, Long> cancellationReasons = airportFlights.stream()
-                    .filter(FlightRecord::isCancelled)
+                    .filter(ASQPFlightRecord::isCancelled)
                     .collect(Collectors.groupingBy(
                             r -> r.getCancellationCode().orElse("Unknown"),
                             Collectors.counting()

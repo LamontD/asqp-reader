@@ -2,7 +2,7 @@ package com.lamontd.travel.flight.asqp;
 
 import com.lamontd.travel.flight.asqp.controller.MenuController;
 import com.lamontd.travel.flight.util.FlightDataIndex;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 import com.lamontd.travel.flight.asqp.service.FlightDataLoader;
 import com.lamontd.travel.flight.asqp.view.DataOverviewView;
 
@@ -24,7 +24,7 @@ public class App {
 
         // Load all files (in parallel if multiple files)
         FlightDataLoader loader = new FlightDataLoader();
-        List<FlightRecord> allRecords = loader.loadFiles(args);
+        List<ASQPFlightRecord> allRecords = loader.loadFiles(args);
 
         if (allRecords.isEmpty()) {
             System.err.println("No records loaded. Exiting.");
@@ -42,7 +42,7 @@ public class App {
     private static void processSampleData() {
         Path samplePath = Paths.get("src/main/resources/data/sample-data.asc.groomed");
         FlightDataLoader loader = new FlightDataLoader();
-        List<FlightRecord> records = loader.loadFiles(new String[]{samplePath.toString()});
+        List<ASQPFlightRecord> records = loader.loadFiles(new String[]{samplePath.toString()});
 
         if (!records.isEmpty()) {
             FlightDataIndex index = new FlightDataIndex(records);

@@ -1,7 +1,7 @@
 package com.lamontd.travel.flight.asqp.service;
 
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 import com.lamontd.travel.flight.reader.CsvFlightRecordReader;
 
 import java.io.IOException;
@@ -22,7 +22,7 @@ public class FlightDataLoader {
      * @param filePaths Array of file paths to load
      * @return Combined list of all flight records
      */
-    public List<FlightRecord> loadFiles(String[] filePaths) {
+    public List<ASQPFlightRecord> loadFiles(String[] filePaths) {
         if (filePaths.length == 1) {
             System.out.println("Loading file...");
         } else {
@@ -31,7 +31,7 @@ public class FlightDataLoader {
         long startTime = System.currentTimeMillis();
 
         // Use parallel streams for multiple files, sequential for single file
-        List<FlightRecord> allRecords = (filePaths.length > 1
+        List<ASQPFlightRecord> allRecords = (filePaths.length > 1
                 ? Arrays.stream(filePaths).parallel()
                 : Arrays.stream(filePaths))
                 .map(this::processFile)
@@ -54,7 +54,7 @@ public class FlightDataLoader {
             }
 
             // Show cancelled vs operated summary
-            long cancelled = allRecords.stream().filter(FlightRecord::isCancelled).count();
+            long cancelled = allRecords.stream().filter(ASQPFlightRecord::isCancelled).count();
             long operated = allRecords.size() - cancelled;
             System.out.printf("  Operated: %,d (%.1f%%), Cancelled: %,d (%.1f%%)%n",
                 operated, (operated * 100.0 / allRecords.size()),
@@ -69,13 +69,13 @@ public class FlightDataLoader {
      * @param filePath Path to the file to process
      * @return List of flight records, or null if error occurred
      */
-    private List<FlightRecord> processFile(String filePath) {
+    private List<ASQPFlightRecord> processFile(String filePath) {
         AirportCodeMapper airportMapper = AirportCodeMapper.getDefault();
         CsvFlightRecordReader reader = new CsvFlightRecordReader(airportMapper);
         Path path = Paths.get(filePath);
 
         try {
-            List<FlightRecord> records = reader.readFromFile(path);
+            List<ASQPFlightRecord> records = reader.readFromFile(path);
 
             if (records.isEmpty()) {
                 System.err.println("  Warning: No records found in " + filePath);

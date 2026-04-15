@@ -20,7 +20,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>com.lamontd.asqp.App</mainClass>
+                  <mainClass>com.lamontd.travel.flight.asqp.App</mainClass>
                 </transformer>
               </transformers>
               <filters>

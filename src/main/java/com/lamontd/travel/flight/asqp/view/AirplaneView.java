@@ -2,7 +2,7 @@ package com.lamontd.travel.flight.asqp.view;
 
 import com.lamontd.travel.flight.util.FlightDataIndex;
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -30,7 +30,7 @@ public class AirplaneView implements ViewRenderer {
         }
 
         // Use indexed lookup - O(1) instead of O(n)
-        List<FlightRecord> allPlaneFlights = index.getByTailNumber(tailNumber);
+        List<ASQPFlightRecord> allPlaneFlights = index.getByTailNumber(tailNumber);
 
         if (allPlaneFlights.isEmpty()) {
             System.out.println("\nNo flights found for tail number: " + tailNumber);
@@ -38,9 +38,9 @@ public class AirplaneView implements ViewRenderer {
         }
 
         // Filter out cancelled and sort
-        List<FlightRecord> planeFlights = allPlaneFlights.stream()
+        List<ASQPFlightRecord> planeFlights = allPlaneFlights.stream()
                 .filter(r -> !r.isCancelled())
-                .sorted(Comparator.comparing(FlightRecord::getDepartureDate)
+                .sorted(Comparator.comparing(ASQPFlightRecord::getDepartureDate)
                         .thenComparing(r -> r.getGateDeparture().orElse(LocalTime.MIN)))
                 .toList();
 
@@ -55,18 +55,18 @@ public class AirplaneView implements ViewRenderer {
         System.out.println("-".repeat(50));
 
         // Group flights by departure date
-        Map<LocalDate, List<FlightRecord>> flightsByDate = planeFlights.stream()
+        Map<LocalDate, List<ASQPFlightRecord>> flightsByDate = planeFlights.stream()
                 .collect(Collectors.groupingBy(
-                        FlightRecord::getDepartureDate,
+                        ASQPFlightRecord::getDepartureDate,
                         TreeMap::new,
                         Collectors.toList()
                 ));
 
         System.out.println("\nDaily Flight History:");
 
-        for (Map.Entry<LocalDate, List<FlightRecord>> entry : flightsByDate.entrySet()) {
+        for (Map.Entry<LocalDate, List<ASQPFlightRecord>> entry : flightsByDate.entrySet()) {
             LocalDate date = entry.getKey();
-            List<FlightRecord> dailyFlights = entry.getValue();
+            List<ASQPFlightRecord> dailyFlights = entry.getValue();
 
             // Sort by departure time
             dailyFlights.sort(Comparator.comparing(r -> r.getGateDeparture().orElse(LocalTime.MIN)));
@@ -75,7 +75,7 @@ public class AirplaneView implements ViewRenderer {
             StringBuilder route = new StringBuilder();
             double totalDistance = 0;
             for (int i = 0; i < dailyFlights.size(); i++) {
-                FlightRecord flight = dailyFlights.get(i);
+                ASQPFlightRecord flight = dailyFlights.get(i);
                 if (i == 0) {
                     route.append(flight.getOrigin());
                 }
@@ -88,7 +88,7 @@ public class AirplaneView implements ViewRenderer {
             System.out.println("    Legs: " + dailyFlights.size());
 
             // Show detailed leg information
-            for (FlightRecord flight : dailyFlights) {
+            for (ASQPFlightRecord flight : dailyFlights) {
                 String originCity = airportMapper.getAirportCity(flight.getOrigin());
                 String destCity = airportMapper.getAirportCity(flight.getDestination());
                 String depTime = flight.getGateDeparture().map(LocalTime::toString).orElse("--:--");

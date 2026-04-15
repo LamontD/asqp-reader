@@ -8,7 +8,7 @@ class FlightRecordDelayTest {
 
     @Test
     void testDelayFields() {
-        FlightRecord record = FlightRecord.builder()
+        ASQPFlightRecord record = ASQPFlightRecord.builder()
                 .carrierCode("DL")
                 .flightNumber("100")
                 .carrierDelay(15)
@@ -36,7 +36,7 @@ class FlightRecordDelayTest {
 
     @Test
     void testTotalDelay() {
-        FlightRecord record = FlightRecord.builder()
+        ASQPFlightRecord record = ASQPFlightRecord.builder()
                 .carrierCode("DL")
                 .flightNumber("100")
                 .carrierDelay(15)
@@ -52,7 +52,7 @@ class FlightRecordDelayTest {
 
     @Test
     void testNoDelay() {
-        FlightRecord record = FlightRecord.builder()
+        ASQPFlightRecord record = ASQPFlightRecord.builder()
                 .carrierCode("DL")
                 .flightNumber("100")
                 .build();
@@ -69,7 +69,7 @@ class FlightRecordDelayTest {
 
     @Test
     void testPartialDelay() {
-        FlightRecord record = FlightRecord.builder()
+        ASQPFlightRecord record = ASQPFlightRecord.builder()
                 .carrierCode("DL")
                 .flightNumber("100")
                 .weatherDelay(45)

@@ -2,7 +2,7 @@ package com.lamontd.travel.flight.asqp.view;
 
 import com.lamontd.travel.flight.util.FlightDataIndex;
 import com.lamontd.travel.flight.mapper.CancellationCodeMapper;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -31,7 +31,7 @@ public class DataOverviewView implements ViewRenderer {
         // Cancellation breakdown
         if (index.cancelledFlights > 0) {
             Map<String, Long> cancellationReasons = index.allRecords.stream()
-                    .filter(FlightRecord::isCancelled)
+                    .filter(ASQPFlightRecord::isCancelled)
                     .collect(Collectors.groupingBy(
                             r -> r.getCancellationCode().orElse("Unknown"),
                             Collectors.counting()
@@ -82,7 +82,7 @@ public class DataOverviewView implements ViewRenderer {
 
             // Find busiest and quietest days
             var sortedByVolume = index.byDate.entrySet().stream()
-                    .sorted(Map.Entry.<LocalDate, List<FlightRecord>>comparingByValue(
+                    .sorted(Map.Entry.<LocalDate, List<ASQPFlightRecord>>comparingByValue(
                             Comparator.comparingInt(List::size)).reversed())
                     .toList();
 

@@ -1,7 +1,7 @@
 package com.lamontd.travel.flight.asqp.service;
 
 import com.lamontd.travel.flight.util.FlightDataIndex;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
@@ -23,18 +23,18 @@ public class FlightScheduleService {
      * Analyzes a flight number to determine its typical schedule
      */
     public FlightScheduleAnalysis analyzeFlightSchedule(String carrierCode, String flightNumber) {
-        List<FlightRecord> records = index.getByFlightNumber(carrierCode, flightNumber);
+        List<ASQPFlightRecord> records = index.getByFlightNumber(carrierCode, flightNumber);
 
         if (records.isEmpty()) {
             return null;
         }
 
         // Group by route (most flights operate on a single route)
-        Map<String, List<FlightRecord>> byRoute = records.stream()
+        Map<String, List<ASQPFlightRecord>> byRoute = records.stream()
                 .collect(Collectors.groupingBy(r -> r.getOrigin() + "-" + r.getDestination()));
 
         // Analyze the most common route
-        Map.Entry<String, List<FlightRecord>> primaryRoute = byRoute.entrySet().stream()
+        Map.Entry<String, List<ASQPFlightRecord>> primaryRoute = byRoute.entrySet().stream()
                 .max(Comparator.comparingInt(e -> e.getValue().size()))
                 .orElse(null);
 
@@ -46,7 +46,7 @@ public class FlightScheduleService {
         String[] routeParts = route.split("-");
         String origin = routeParts[0];
         String destination = routeParts[1];
-        List<FlightRecord> routeRecords = primaryRoute.getValue();
+        List<ASQPFlightRecord> routeRecords = primaryRoute.getValue();
 
         // Analyze days of operation
         Map<DayOfWeek, Long> dayFrequency = routeRecords.stream()
@@ -59,13 +59,13 @@ public class FlightScheduleService {
 
         // Find typical scheduled times (using scheduled CRS times, not actuals)
         List<LocalTime> scheduledDepartures = routeRecords.stream()
-                .map(FlightRecord::getScheduledCrsDeparture)
+                .map(ASQPFlightRecord::getScheduledCrsDeparture)
                 .filter(Objects::nonNull)
                 .sorted()
                 .toList();
 
         List<LocalTime> scheduledArrivals = routeRecords.stream()
-                .map(FlightRecord::getScheduledCrsArrival)
+                .map(ASQPFlightRecord::getScheduledCrsArrival)
                 .filter(Objects::nonNull)
                 .sorted()
                 .toList();
@@ -75,12 +75,12 @@ public class FlightScheduleService {
 
         // Calculate reliability metrics
         long totalOperations = routeRecords.size();
-        long cancelled = routeRecords.stream().filter(FlightRecord::isCancelled).count();
+        long cancelled = routeRecords.stream().filter(ASQPFlightRecord::isCancelled).count();
         long operated = totalOperations - cancelled;
         double completionRate = (operated * 100.0) / totalOperations;
 
         // Calculate on-time performance for operated flights
-        List<FlightRecord> operatedFlights = routeRecords.stream()
+        List<ASQPFlightRecord> operatedFlights = routeRecords.stream()
                 .filter(r -> !r.isCancelled())
                 .toList();
 
@@ -162,7 +162,7 @@ public class FlightScheduleService {
     /**
      * Determines if a flight was on-time (within 15 minutes of schedule)
      */
-    private boolean isOnTime(FlightRecord record) {
+    private boolean isOnTime(ASQPFlightRecord record) {
         if (record.getScheduledCrsDeparture() == null || record.getGateDeparture().isEmpty()) {
             return false;
         }
@@ -173,7 +173,7 @@ public class FlightScheduleService {
     /**
      * Calculates departure delay in minutes
      */
-    private Integer calculateDepartureDelay(FlightRecord record) {
+    private Integer calculateDepartureDelay(ASQPFlightRecord record) {
         if (record.getScheduledCrsDeparture() == null || record.getGateDeparture().isEmpty()) {
             return null;
         }

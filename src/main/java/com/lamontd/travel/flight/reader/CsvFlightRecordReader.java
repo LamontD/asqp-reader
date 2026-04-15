@@ -2,7 +2,7 @@ package com.lamontd.travel.flight.reader;
 
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
 import com.lamontd.travel.flight.model.AirportInfo;
-import com.lamontd.travel.flight.model.FlightRecord;
+import com.lamontd.travel.flight.model.ASQPFlightRecord;
 import com.lamontd.travel.flight.validation.FlightRecordValidationException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -44,14 +44,14 @@ public class CsvFlightRecordReader {
         this.airportMapper = airportMapper;
     }
 
-    public List<FlightRecord> readFromFile(Path filePath) throws IOException {
+    public List<ASQPFlightRecord> readFromFile(Path filePath) throws IOException {
         try (Reader reader = Files.newBufferedReader(filePath)) {
             return readFromReader(reader);
         }
     }
 
-    public List<FlightRecord> readFromReader(Reader reader) throws IOException {
-        List<FlightRecord> records = new ArrayList<>();
+    public List<ASQPFlightRecord> readFromReader(Reader reader) throws IOException {
+        List<ASQPFlightRecord> records = new ArrayList<>();
         CSVFormat csvFormat = CSVFormat.DEFAULT
                 .builder()
                 .setDelimiter('|')
@@ -64,7 +64,7 @@ public class CsvFlightRecordReader {
             int recordNumber = 1;
             for (CSVRecord csvRecord : parser) {
                 try {
-                    FlightRecord flightRecord = parseRecord(csvRecord, recordNumber);
+                    ASQPFlightRecord flightRecord = parseRecord(csvRecord, recordNumber);
                     records.add(flightRecord);
                 } catch (FlightRecordValidationException e) {
                     System.err.println("Skipping invalid record: " + e.getMessage());
@@ -75,8 +75,8 @@ public class CsvFlightRecordReader {
         return records;
     }
 
-    private FlightRecord parseRecord(CSVRecord csvRecord, int recordNumber) throws FlightRecordValidationException {
-        FlightRecord.Builder builder = FlightRecord.builder();
+    private ASQPFlightRecord parseRecord(CSVRecord csvRecord, int recordNumber) throws FlightRecordValidationException {
+        ASQPFlightRecord.Builder builder = ASQPFlightRecord.builder();
 
         builder.carrierCode(validateRequiredString(csvRecord, "carrier_code", recordNumber));
         builder.flightNumber(validateRequiredString(csvRecord, "flight_number", recordNumber));
