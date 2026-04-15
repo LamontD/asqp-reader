@@ -1,6 +1,6 @@
-package com.lamontd.travel.flight.asqp.service;
+package com.lamontd.travel.flight.service;
 
-import com.lamontd.travel.flight.asqp.index.FlightDataIndex;
+import com.lamontd.travel.flight.index.RouteIndex;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
@@ -16,14 +16,14 @@ import java.util.stream.Collectors;
 public class RouteGraphService {
 
     private final Graph<String, DefaultWeightedEdge> routeGraph;
-    private final FlightDataIndex index;
+    private final RouteIndex index;
     private final DijkstraShortestPath<String, DefaultWeightedEdge> dijkstra;
 
     /**
-     * Builds a weighted graph from the flight data index
+     * Builds a weighted graph from the route index
      * Nodes = airports, Edges = routes, Weights = great circle distances
      */
-    public RouteGraphService(FlightDataIndex index) {
+    public RouteGraphService(RouteIndex index) {
         this.index = index;
         this.routeGraph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
         buildGraph();
@@ -31,33 +31,31 @@ public class RouteGraphService {
     }
 
     /**
-     * Builds the route graph from flight data
+     * Builds the route graph from route index
      */
     private void buildGraph() {
         // Get all unique airports from the index
         Set<String> airports = new HashSet<>();
-        airports.addAll(index.byOriginAirport.keySet());
-        airports.addAll(index.byDestinationAirport.keySet());
+        airports.addAll(index.getOriginAirports());
+        airports.addAll(index.getDestinationAirports());
 
         // Add all airports as vertices
         airports.forEach(routeGraph::addVertex);
 
-        // Add all routes as weighted edges (using pre-computed distances)
-        index.routeDistances.forEach((route, distance) -> {
-            String[] parts = route.split("-");
-            if (parts.length == 2 && distance > 0) {
-                String origin = parts[0];
-                String dest = parts[1];
-
-                // Only add edge if both airports exist in graph
-                if (routeGraph.containsVertex(origin) && routeGraph.containsVertex(dest)) {
-                    DefaultWeightedEdge edge = routeGraph.addEdge(origin, dest);
-                    if (edge != null) {
-                        routeGraph.setEdgeWeight(edge, distance);
+        // Add all routes as weighted edges
+        for (String origin : index.getOriginAirports()) {
+            for (String dest : index.getDestinationAirports()) {
+                if (!origin.equals(dest)) {
+                    double distance = index.getRouteDistance(origin, dest);
+                    if (distance > 0 && routeGraph.containsVertex(origin) && routeGraph.containsVertex(dest)) {
+                        DefaultWeightedEdge edge = routeGraph.addEdge(origin, dest);
+                        if (edge != null) {
+                            routeGraph.setEdgeWeight(edge, distance);
+                        }
                     }
                 }
             }
-        });
+        }
     }
 
     /**

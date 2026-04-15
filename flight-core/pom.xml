@@ -27,6 +27,12 @@
       <artifactId>gson</artifactId>
     </dependency>
 
+    <!-- JGraphT for graph analysis -->
+    <dependency>
+      <groupId>org.jgrapht</groupId>
+      <artifactId>jgrapht-core</artifactId>
+    </dependency>
+
     <!-- JUnit for testing -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>

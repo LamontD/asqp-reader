@@ -1,16 +1,13 @@
-package com.lamontd.travel.flight.asqp.service;
+package com.lamontd.travel.flight.service;
 
-import com.lamontd.travel.flight.asqp.index.FlightDataIndex;
-import com.lamontd.travel.flight.asqp.model.ASQPFlightRecord;
+import com.lamontd.travel.flight.index.RouteIndex;
 import org.jgrapht.GraphPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,79 +15,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class RouteGraphServiceTest {
 
     private RouteGraphService graphService;
-    private FlightDataIndex index;
 
     @BeforeEach
     void setUp() {
-        // Create sample flight data with a simple network:
-        // JFK -> BOS (direct)
-        // JFK -> LAX (direct)
-        // BOS -> ORD (direct)
-        // LAX -> ORD (direct)
+        // Create a simple test implementation of RouteIndex
+        // Network: JFK -> BOS (direct)
+        //         JFK -> LAX (direct)
+        //         BOS -> ORD (direct)
+        //         LAX -> ORD (direct)
         // So JFK -> ORD has two possible paths: JFK->BOS->ORD or JFK->LAX->ORD
 
-        List<ASQPFlightRecord> records = new ArrayList<>();
-        LocalDate date = LocalDate.of(2025, 1, 15);
-        LocalTime time = LocalTime.of(10, 0);
-
-        // JFK -> BOS (190 miles)
-        records.add(ASQPFlightRecord.builder()
-                .carrierCode("AA")
-                .flightNumber("100")
-                .origin("JFK")
-                .destination("BOS")
-                .departureDate(date)
-                .scheduledOagDeparture(time)
-                .scheduledCrsDeparture(time)
-                .scheduledArrival(time.plusHours(1))
-                .scheduledCrsArrival(time.plusHours(1))
-                .tailNumber("N12345")
-                .build());
-
-        // JFK -> LAX (2475 miles)
-        records.add(ASQPFlightRecord.builder()
-                .carrierCode("AA")
-                .flightNumber("200")
-                .origin("JFK")
-                .destination("LAX")
-                .departureDate(date)
-                .scheduledOagDeparture(time)
-                .scheduledCrsDeparture(time)
-                .scheduledArrival(time.plusHours(5))
-                .scheduledCrsArrival(time.plusHours(5))
-                .tailNumber("N23456")
-                .build());
-
-        // BOS -> ORD (864 miles)
-        records.add(ASQPFlightRecord.builder()
-                .carrierCode("AA")
-                .flightNumber("300")
-                .origin("BOS")
-                .destination("ORD")
-                .departureDate(date)
-                .scheduledOagDeparture(time)
-                .scheduledCrsDeparture(time)
-                .scheduledArrival(time.plusHours(2))
-                .scheduledCrsArrival(time.plusHours(2))
-                .tailNumber("N34567")
-                .build());
-
-        // LAX -> ORD (1745 miles)
-        records.add(ASQPFlightRecord.builder()
-                .carrierCode("AA")
-                .flightNumber("400")
-                .origin("LAX")
-                .destination("ORD")
-                .departureDate(date)
-                .scheduledOagDeparture(time)
-                .scheduledCrsDeparture(time)
-                .scheduledArrival(time.plusHours(3))
-                .scheduledCrsArrival(time.plusHours(3))
-                .tailNumber("N45678")
-                .build());
-
-        index = new FlightDataIndex(records);
-        graphService = new RouteGraphService(index);
+        RouteIndex testIndex = new TestRouteIndex();
+        graphService = new RouteGraphService(testIndex);
     }
 
     @Test
@@ -195,5 +131,45 @@ class RouteGraphServiceTest {
 
         Set<String> reachable = graphService.getReachableAirports("XXX");
         assertTrue(reachable.isEmpty());
+    }
+
+    /**
+     * Simple test implementation of RouteIndex
+     */
+    private static class TestRouteIndex implements RouteIndex {
+        private final Map<String, Double> routeDistances;
+        private final Set<String> origins;
+        private final Set<String> destinations;
+
+        public TestRouteIndex() {
+            routeDistances = new HashMap<>();
+            // JFK -> BOS: 190 miles (approximate)
+            routeDistances.put("JFK-BOS", 190.0);
+            // JFK -> LAX: 2475 miles (approximate)
+            routeDistances.put("JFK-LAX", 2475.0);
+            // BOS -> ORD: 864 miles (approximate)
+            routeDistances.put("BOS-ORD", 864.0);
+            // LAX -> ORD: 1745 miles (approximate)
+            routeDistances.put("LAX-ORD", 1745.0);
+
+            origins = Set.of("JFK", "BOS", "LAX");
+            destinations = Set.of("BOS", "LAX", "ORD");
+        }
+
+        @Override
+        public Set<String> getOriginAirports() {
+            return origins;
+        }
+
+        @Override
+        public Set<String> getDestinationAirports() {
+            return destinations;
+        }
+
+        @Override
+        public double getRouteDistance(String origin, String destination) {
+            String routeKey = origin + "-" + destination;
+            return routeDistances.getOrDefault(routeKey, 0.0);
+        }
     }
 }

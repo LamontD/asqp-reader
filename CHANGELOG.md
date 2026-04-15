@@ -295,7 +295,7 @@ mapper.addCarrier("XX", "Custom", "Custom Airlines");
 ### Resource Files Kept
 
 1. **carriers.csv** - Legacy format (backward compatibility)
-2. **sample-data.asc.groomed** - Sample flight data
+2. **sample-data.asqpflightrecord.csv** - Sample flight data
 
 ---
 

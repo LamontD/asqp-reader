@@ -2,7 +2,7 @@ package com.lamontd.travel.flight.asqp.view;
 
 import com.lamontd.travel.flight.asqp.index.FlightDataIndex;
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
-import com.lamontd.travel.flight.asqp.service.RouteGraphService;
+import com.lamontd.travel.flight.service.RouteGraphService;
 import org.jgrapht.GraphPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
 

@@ -90,7 +90,7 @@ flight-data-analysis/                     # Parent project
             ├── RouteNetworkView.java     # Shortest path analysis
             └── FlightScheduleView.java   # Recurring flight patterns
     └── src/main/resources/data/
-        └── sample-data.asc.groomed       # Sample ASQP data file (500 records)
+        └── sample-data.asqpflightrecord.csv  # Sample ASQP data file (500 records)
 ```
 
 ## Data Format

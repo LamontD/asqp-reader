@@ -161,7 +161,7 @@ Select an option (1-9):
 - `airlines.dat` - 992 carriers (OpenFlights)
 - `airports.dat` - 6,033 airports (OpenFlights)
 - `countries.json` - 193 countries (ISO 3166-1)
-- `sample-data.asc.groomed` - Sample flight data (500 records)
+- `sample-data.asqpflightrecord.csv` - Sample flight data (500 records)
 
 **Total Size:** ~2 MB (completely self-contained)
 

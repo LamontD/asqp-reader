@@ -97,7 +97,7 @@ class CsvFlightRecordReaderTest {
 
     @Test
     void testReadSampleDataFile() throws IOException {
-        Path samplePath = Paths.get("src/main/resources/data/sample-data.asc.groomed");
+        Path samplePath = Paths.get("src/main/resources/data/sample-data.asqpflightrecord.csv");
         if (!samplePath.toFile().exists()) {
             System.out.println("Sample data file not found, skipping test");
             return;

@@ -40,7 +40,7 @@ public class App {
     }
 
     private static void processSampleData() {
-        Path samplePath = Paths.get("src/main/resources/data/sample-data.asc.groomed");
+        Path samplePath = Paths.get("src/main/resources/data/sample-data.asqpflightrecord.csv");
         FlightDataLoader loader = new FlightDataLoader();
         List<ASQPFlightRecord> records = loader.loadFiles(new String[]{samplePath.toString()});
 

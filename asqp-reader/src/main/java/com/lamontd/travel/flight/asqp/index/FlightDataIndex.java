@@ -1,5 +1,6 @@
 package com.lamontd.travel.flight.asqp.index;
 
+import com.lamontd.travel.flight.index.RouteIndex;
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
 import com.lamontd.travel.flight.mapper.CarrierCodeMapper;
 import com.lamontd.travel.flight.mapper.CountryCodeMapper;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 /**
  * Pre-computed indices for efficient data access
  */
-public class FlightDataIndex {
+public class FlightDataIndex implements RouteIndex {
     public final List<ASQPFlightRecord> allRecords;
     public final AirportCodeMapper airportMapper;
 
@@ -150,5 +151,24 @@ public class FlightDataIndex {
         String routeKey = origin + "-" + destination;
         return routeDistances.getOrDefault(routeKey,
                 distanceCalculator.calculateRouteDistance(routeKey)); // fallback calculation
+    }
+
+    // RouteIndex interface implementation
+
+    @Override
+    public Set<String> getOriginAirports() {
+        return byOriginAirport.keySet();
+    }
+
+    @Override
+    public Set<String> getDestinationAirports() {
+        return byDestinationAirport.keySet();
+    }
+
+    @Override
+    public double getRouteDistance(String origin, String destination) {
+        String routeKey = origin + "-" + destination;
+        return routeDistances.getOrDefault(routeKey,
+                distanceCalculator.calculateRouteDistance(routeKey));
     }
 }
