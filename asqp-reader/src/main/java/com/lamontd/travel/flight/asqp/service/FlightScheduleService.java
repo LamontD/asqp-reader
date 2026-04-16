@@ -2,6 +2,7 @@ package com.lamontd.travel.flight.asqp.service;
 
 import com.lamontd.travel.flight.asqp.index.FlightDataIndex;
 import com.lamontd.travel.flight.asqp.model.ASQPFlightRecord;
+import com.lamontd.travel.flight.model.FlightSegment;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
@@ -20,7 +21,8 @@ public class FlightScheduleService {
     }
 
     /**
-     * Analyzes a flight number to determine its typical schedule
+     * Analyzes a flight number to determine its typical schedule.
+     * Now includes multi-leg segment detection and extraction.
      */
     public FlightScheduleAnalysis analyzeFlightSchedule(String carrierCode, String flightNumber) {
         List<ASQPFlightRecord> records = index.getByFlightNumber(carrierCode, flightNumber);
@@ -29,11 +31,46 @@ public class FlightScheduleService {
             return null;
         }
 
-        // Group by route (most flights operate on a single route)
+        // CRITICAL: Group by DATE first to detect multi-leg operations
+        // (multiple legs on same day indicate a through-flight)
+        Map<String, List<ASQPFlightRecord>> recordsByDate = records.stream()
+                .collect(Collectors.groupingBy(r -> r.getDepartureDate().toString()));
+
+        // Extract all bookable segments from all dates
+        Set<FlightSegment> allSegments = new LinkedHashSet<>();
+        Set<String> observedRoutePatterns = new HashSet<>();
+
+        for (List<ASQPFlightRecord> dailyRecords : recordsByDate.values()) {
+            // Sort by scheduled departure time to get correct leg sequence
+            List<ASQPFlightRecord> sortedLegs = dailyRecords.stream()
+                    .sorted(Comparator.comparing(r -> r.getScheduledCrsDeparture() != null ?
+                            r.getScheduledCrsDeparture() : LocalTime.MIN))
+                    .toList();
+
+            // Extract segments for this date
+            List<FlightSegment> dailySegments = extractBookableSegments(sortedLegs);
+            allSegments.addAll(dailySegments);
+
+            // Build route pattern string (e.g., "ORD-DAL-MCO" for 2-leg flight)
+            StringBuilder pattern = new StringBuilder(sortedLegs.get(0).getOrigin());
+            for (ASQPFlightRecord leg : sortedLegs) {
+                pattern.append("-").append(leg.getDestination());
+            }
+            observedRoutePatterns.add(pattern.toString());
+        }
+
+        // Determine the most common route pattern
+        String routePattern = observedRoutePatterns.stream()
+                .max(Comparator.comparingInt(String::length))
+                .orElse(null);
+
+        // Group by simple route to check for multi-route operation
         Map<String, List<ASQPFlightRecord>> byRoute = records.stream()
                 .collect(Collectors.groupingBy(r -> r.getOrigin() + "-" + r.getDestination()));
 
-        // Analyze the most common route
+        boolean isMultiRoute = byRoute.size() > 1;
+
+        // For reporting purposes, use the most common single-leg route
         Map.Entry<String, List<ASQPFlightRecord>> primaryRoute = byRoute.entrySet().stream()
                 .max(Comparator.comparingInt(e -> e.getValue().size()))
                 .orElse(null);
@@ -121,7 +158,10 @@ public class FlightScheduleService {
                 completionRate,
                 onTimeRate,
                 avgDelay,
-                routeFrequencies
+                routeFrequencies,
+                new ArrayList<>(allSegments),
+                isMultiRoute,
+                routePattern
         );
     }
 
@@ -189,6 +229,87 @@ public class FlightScheduleService {
     }
 
     /**
+     * Extracts all bookable segments from a set of legs that operate on the same day.
+     * For N legs, this generates:
+     * - N direct leg segments (one per leg)
+     * - N*(N-1)/2 through connection segments (all combinations of origin to destination)
+     *
+     * Example: ORD→DAL→MCO (2 legs) produces:
+     * - ORD→DAL (direct)
+     * - DAL→MCO (direct)
+     * - ORD→MCO (through via DAL)
+     *
+     * @param dailyLegs List of flight legs for the same flight number on the same date,
+     *                  must be sorted by departure time
+     * @return List of all bookable segments
+     */
+    private List<FlightSegment> extractBookableSegments(List<ASQPFlightRecord> dailyLegs) {
+        if (dailyLegs.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Single leg - simple case
+        if (dailyLegs.size() == 1) {
+            ASQPFlightRecord leg = dailyLegs.get(0);
+            return Collections.singletonList(
+                FlightSegment.builder()
+                    .carrierCode(leg.getCarrierCode())
+                    .flightNumber(leg.getFlightNumber())
+                    .originAirport(leg.getOrigin())
+                    .destinationAirport(leg.getDestination())
+                    .segmentType(FlightSegment.SegmentType.DIRECT_LEG)
+                    .intermediateStops(Collections.emptyList())
+                    .legCount(1)
+                    .build()
+            );
+        }
+
+        // Multi-leg: Generate all bookable combinations
+        List<FlightSegment> segments = new ArrayList<>();
+        String carrierCode = dailyLegs.get(0).getCarrierCode();
+        String flightNumber = dailyLegs.get(0).getFlightNumber();
+
+        // Generate all segments: direct legs + through connections
+        for (int i = 0; i < dailyLegs.size(); i++) {
+            for (int j = i; j < dailyLegs.size(); j++) {
+                String origin = dailyLegs.get(i).getOrigin();
+                String destination = dailyLegs.get(j).getDestination();
+
+                if (i == j) {
+                    // Direct leg (single physical leg)
+                    segments.add(FlightSegment.builder()
+                        .carrierCode(carrierCode)
+                        .flightNumber(flightNumber)
+                        .originAirport(origin)
+                        .destinationAirport(destination)
+                        .segmentType(FlightSegment.SegmentType.DIRECT_LEG)
+                        .intermediateStops(Collections.emptyList())
+                        .legCount(1)
+                        .build());
+                } else {
+                    // Through connection (multiple legs)
+                    List<String> intermediateStops = new ArrayList<>();
+                    for (int k = i; k < j; k++) {
+                        intermediateStops.add(dailyLegs.get(k).getDestination());
+                    }
+
+                    segments.add(FlightSegment.builder()
+                        .carrierCode(carrierCode)
+                        .flightNumber(flightNumber)
+                        .originAirport(origin)
+                        .destinationAirport(destination)
+                        .segmentType(FlightSegment.SegmentType.THROUGH_CONNECTION)
+                        .intermediateStops(intermediateStops)
+                        .legCount(j - i + 1)
+                        .build());
+                }
+            }
+        }
+
+        return segments;
+    }
+
+    /**
      * Result of flight schedule analysis
      */
     public static class FlightScheduleAnalysis {
@@ -208,6 +329,11 @@ public class FlightScheduleService {
         public final Double avgDelay;
         public final Map<String, Long> routeFrequencies;
 
+        // New fields for multi-leg support
+        public final List<FlightSegment> bookableSegments;
+        public final boolean isMultiRoute;
+        public final String routePattern;
+
         public FlightScheduleAnalysis(String carrierCode, String flightNumber,
                                      String origin, String destination,
                                      LocalTime typicalDeparture, LocalTime typicalArrival,
@@ -215,6 +341,21 @@ public class FlightScheduleService {
                                      long totalOperations, long operatedCount, long cancelledCount,
                                      double completionRate, double onTimeRate, Double avgDelay,
                                      Map<String, Long> routeFrequencies) {
+            this(carrierCode, flightNumber, origin, destination, typicalDeparture, typicalArrival,
+                 operatingDays, dayFrequency, totalOperations, operatedCount, cancelledCount,
+                 completionRate, onTimeRate, avgDelay, routeFrequencies,
+                 Collections.emptyList(), false, null);
+        }
+
+        public FlightScheduleAnalysis(String carrierCode, String flightNumber,
+                                     String origin, String destination,
+                                     LocalTime typicalDeparture, LocalTime typicalArrival,
+                                     Set<DayOfWeek> operatingDays, Map<DayOfWeek, Long> dayFrequency,
+                                     long totalOperations, long operatedCount, long cancelledCount,
+                                     double completionRate, double onTimeRate, Double avgDelay,
+                                     Map<String, Long> routeFrequencies,
+                                     List<FlightSegment> bookableSegments,
+                                     boolean isMultiRoute, String routePattern) {
             this.carrierCode = carrierCode;
             this.flightNumber = flightNumber;
             this.origin = origin;
@@ -230,6 +371,10 @@ public class FlightScheduleService {
             this.onTimeRate = onTimeRate;
             this.avgDelay = avgDelay;
             this.routeFrequencies = routeFrequencies;
+            this.bookableSegments = bookableSegments != null ?
+                Collections.unmodifiableList(bookableSegments) : Collections.emptyList();
+            this.isMultiRoute = isMultiRoute;
+            this.routePattern = routePattern;
         }
     }
 }

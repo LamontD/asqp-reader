@@ -4,9 +4,11 @@ import com.lamontd.travel.flight.asqp.index.FlightDataIndex;
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
 import com.lamontd.travel.flight.mapper.CarrierCodeMapper;
 import com.lamontd.travel.flight.asqp.service.FlightScheduleService;
+import com.lamontd.travel.flight.model.FlightSegment;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -91,6 +93,19 @@ public class FlightScheduleView implements ViewRenderer {
             }
 
             System.out.printf("%-30s %dh %02dm%n", "Typical Flight Time:", hours, minutes);
+        }
+
+        // Route Pattern (for multi-leg flights)
+        if (schedule.routePattern != null && schedule.routePattern.contains("-")) {
+            String[] parts = schedule.routePattern.split("-");
+            if (parts.length > 2) {
+                System.out.printf("%-30s %s%n", "Multi-Leg Route Pattern:", schedule.routePattern);
+            }
+        }
+
+        // Bookable Segments
+        if (!schedule.bookableSegments.isEmpty() && schedule.bookableSegments.size() > 1) {
+            displayBookableSegments(schedule, airportMapper);
         }
 
         // Days of Operation
@@ -183,5 +198,100 @@ public class FlightScheduleView implements ViewRenderer {
             schedule.completionRate, schedule.onTimeRate);
 
         System.out.println("=".repeat(70));
+    }
+
+    private void displayBookableSegments(FlightScheduleService.FlightScheduleAnalysis schedule,
+                                         AirportCodeMapper airportMapper) {
+        System.out.println("\n" + "-".repeat(70));
+        System.out.println("BOOKABLE SEGMENTS");
+        System.out.println("-".repeat(70));
+
+        // Separate direct legs and through connections
+        List<FlightSegment> directLegs = schedule.bookableSegments.stream()
+                .filter(FlightSegment::isDirect)
+                .sorted((s1, s2) -> {
+                    // Try to sort by logical order if possible
+                    return s1.getOriginAirport().compareTo(s2.getOriginAirport());
+                })
+                .toList();
+
+        List<FlightSegment> throughConnections = schedule.bookableSegments.stream()
+                .filter(FlightSegment::isThrough)
+                .sorted((s1, s2) -> {
+                    // Sort by leg count (shorter first), then alphabetically
+                    int legCompare = Integer.compare(s1.getLegCount(), s2.getLegCount());
+                    if (legCompare != 0) return legCompare;
+                    return s1.getSegmentKey().compareTo(s2.getSegmentKey());
+                })
+                .toList();
+
+        System.out.printf("This flight offers %d bookable segment%s:%n%n",
+                schedule.bookableSegments.size(),
+                schedule.bookableSegments.size() == 1 ? "" : "s");
+
+        // Display direct legs
+        if (!directLegs.isEmpty()) {
+            System.out.println("Direct Legs:");
+            for (int i = 0; i < directLegs.size(); i++) {
+                FlightSegment segment = directLegs.get(i);
+                String originCity = airportMapper.getAirportCity(segment.getOriginAirport());
+                String destCity = airportMapper.getAirportCity(segment.getDestinationAirport());
+
+                double distance = getDistanceIfAvailable(segment, schedule);
+                if (distance > 0) {
+                    System.out.printf("  %d. %s (%s) → %s (%s): %.0f miles%n",
+                            i + 1,
+                            segment.getOriginAirport(), originCity,
+                            segment.getDestinationAirport(), destCity,
+                            distance);
+                } else {
+                    System.out.printf("  %d. %s (%s) → %s (%s)%n",
+                            i + 1,
+                            segment.getOriginAirport(), originCity,
+                            segment.getDestinationAirport(), destCity);
+                }
+            }
+            System.out.println();
+        }
+
+        // Display through connections
+        if (!throughConnections.isEmpty()) {
+            System.out.println("Through Connections:");
+            for (int i = 0; i < throughConnections.size(); i++) {
+                FlightSegment segment = throughConnections.get(i);
+                String originCity = airportMapper.getAirportCity(segment.getOriginAirport());
+                String destCity = airportMapper.getAirportCity(segment.getDestinationAirport());
+
+                String stops = segment.getIntermediateStops().isEmpty() ? "" :
+                        " (via " + String.join(", ", segment.getIntermediateStops()) + ")";
+
+                double distance = getDistanceIfAvailable(segment, schedule);
+                if (distance > 0) {
+                    System.out.printf("  %d. %s (%s) → %s (%s)%s: %.0f miles, %d leg%s%n",
+                            i + 1,
+                            segment.getOriginAirport(), originCity,
+                            segment.getDestinationAirport(), destCity,
+                            stops, distance, segment.getLegCount(),
+                            segment.getLegCount() == 1 ? "" : "s");
+                } else {
+                    System.out.printf("  %d. %s (%s) → %s (%s)%s: %d leg%s%n",
+                            i + 1,
+                            segment.getOriginAirport(), originCity,
+                            segment.getDestinationAirport(), destCity,
+                            stops, segment.getLegCount(),
+                            segment.getLegCount() == 1 ? "" : "s");
+                }
+            }
+        }
+
+        System.out.println("\nNote: All segments share the same flight number " +
+                schedule.carrierCode + " " + schedule.flightNumber);
+    }
+
+    private double getDistanceIfAvailable(FlightSegment segment,
+                                          FlightScheduleService.FlightScheduleAnalysis schedule) {
+        // Try to get distance from the analysis route frequencies or calculate it
+        // For now, return 0 (distance calculation could be added later if needed)
+        return 0.0;
     }
 }

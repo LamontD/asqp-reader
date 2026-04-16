@@ -2,6 +2,7 @@ package com.lamontd.travel.flight.asqp.service;
 
 import com.lamontd.travel.flight.asqp.index.FlightDataIndex;
 import com.lamontd.travel.flight.asqp.model.ASQPFlightRecord;
+import com.lamontd.travel.flight.model.FlightSegment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -195,5 +196,173 @@ class FlightScheduleServiceTest {
                 scheduleService.analyzeFlightSchedule("XX", "999");
 
         assertNull(analysis);
+    }
+
+    @Test
+    void testMultiLegSegmentExtraction() {
+        // Create multi-leg test data for WN 4283
+        List<ASQPFlightRecord> multiLegRecords = new ArrayList<>();
+
+        // Day 1: 2-leg flight (ORD -> DAL -> MCO)
+        multiLegRecords.add(createFlight("WN", "4283", "ORD", "DAL",
+            LocalDate.of(2025, 1, 1), LocalTime.of(7, 30), LocalTime.of(10, 5),
+            false, LocalTime.of(7, 23), LocalTime.of(9, 43)));
+        multiLegRecords.add(createFlight("WN", "4283", "DAL", "MCO",
+            LocalDate.of(2025, 1, 1), LocalTime.of(10, 40), LocalTime.of(14, 10),
+            false, LocalTime.of(10, 33), LocalTime.of(13, 54)));
+
+        // Day 2: Single leg (DAL -> MCO only)
+        multiLegRecords.add(createFlight("WN", "4283", "DAL", "MCO",
+            LocalDate.of(2025, 1, 2), LocalTime.of(11, 5), LocalTime.of(14, 35),
+            false, LocalTime.of(11, 8), LocalTime.of(14, 22)));
+
+        FlightDataIndex multiLegIndex = new FlightDataIndex(multiLegRecords);
+        FlightScheduleService multiLegService = new FlightScheduleService(multiLegIndex);
+
+        FlightScheduleService.FlightScheduleAnalysis analysis =
+            multiLegService.analyzeFlightSchedule("WN", "4283");
+
+        assertNotNull(analysis);
+        assertEquals("WN", analysis.carrierCode);
+        assertEquals("4283", analysis.flightNumber);
+
+        // Should have extracted segments
+        assertNotNull(analysis.bookableSegments);
+        assertFalse(analysis.bookableSegments.isEmpty());
+
+        // Should have both direct legs and through connections
+        long directLegs = analysis.bookableSegments.stream()
+            .filter(FlightSegment::isDirect)
+            .count();
+        long throughConnections = analysis.bookableSegments.stream()
+            .filter(FlightSegment::isThrough)
+            .count();
+
+        assertTrue(directLegs > 0, "Should have direct leg segments");
+        assertTrue(throughConnections > 0, "Should have through connection segments");
+
+        // Check for specific segments
+        boolean hasOrdDal = analysis.bookableSegments.stream()
+            .anyMatch(s -> s.getOriginAirport().equals("ORD") &&
+                          s.getDestinationAirport().equals("DAL") &&
+                          s.isDirect());
+        boolean hasDalMco = analysis.bookableSegments.stream()
+            .anyMatch(s -> s.getOriginAirport().equals("DAL") &&
+                          s.getDestinationAirport().equals("MCO") &&
+                          s.isDirect());
+        boolean hasOrdMco = analysis.bookableSegments.stream()
+            .anyMatch(s -> s.getOriginAirport().equals("ORD") &&
+                          s.getDestinationAirport().equals("MCO") &&
+                          s.isThrough());
+
+        assertTrue(hasOrdDal, "Should have ORD-DAL direct leg segment");
+        assertTrue(hasDalMco, "Should have DAL-MCO direct leg segment");
+        assertTrue(hasOrdMco, "Should have ORD-MCO through connection segment");
+    }
+
+    @Test
+    void testThroughConnectionIntermediateStops() {
+        // Create 2-leg test data
+        List<ASQPFlightRecord> records = new ArrayList<>();
+        records.add(createFlight("WN", "4283", "ORD", "DAL",
+            LocalDate.of(2025, 1, 1), LocalTime.of(7, 30), LocalTime.of(10, 5),
+            false, LocalTime.of(7, 23), LocalTime.of(9, 43)));
+        records.add(createFlight("WN", "4283", "DAL", "MCO",
+            LocalDate.of(2025, 1, 1), LocalTime.of(10, 40), LocalTime.of(14, 10),
+            false, LocalTime.of(10, 33), LocalTime.of(13, 54)));
+
+        FlightDataIndex testIndex = new FlightDataIndex(records);
+        FlightScheduleService testService = new FlightScheduleService(testIndex);
+
+        FlightScheduleService.FlightScheduleAnalysis analysis =
+            testService.analyzeFlightSchedule("WN", "4283");
+
+        FlightSegment ordMco = analysis.bookableSegments.stream()
+            .filter(s -> s.getOriginAirport().equals("ORD") &&
+                        s.getDestinationAirport().equals("MCO") &&
+                        s.isThrough())
+            .findFirst()
+            .orElse(null);
+
+        assertNotNull(ordMco, "Should have ORD-MCO through connection");
+        assertEquals(1, ordMco.getIntermediateStops().size(),
+            "ORD-MCO should have 1 intermediate stop");
+        assertEquals("DAL", ordMco.getIntermediateStops().get(0),
+            "Intermediate stop should be DAL");
+        assertEquals(2, ordMco.getLegCount(), "ORD-MCO should be 2 legs");
+    }
+
+    @Test
+    void testThreeLegSegmentExtraction() {
+        // Create 3-leg test data: A -> B -> C -> D
+        List<ASQPFlightRecord> records = new ArrayList<>();
+        records.add(createFlight("WN", "5114", "PHX", "LAS",
+            LocalDate.of(2025, 1, 1), LocalTime.of(8, 0), LocalTime.of(9, 0),
+            false, LocalTime.of(8, 0), LocalTime.of(9, 0)));
+        records.add(createFlight("WN", "5114", "LAS", "SFO",
+            LocalDate.of(2025, 1, 1), LocalTime.of(10, 0), LocalTime.of(11, 30),
+            false, LocalTime.of(10, 0), LocalTime.of(11, 30)));
+        records.add(createFlight("WN", "5114", "SFO", "SEA",
+            LocalDate.of(2025, 1, 1), LocalTime.of(13, 0), LocalTime.of(15, 0),
+            false, LocalTime.of(13, 0), LocalTime.of(15, 0)));
+
+        FlightDataIndex testIndex = new FlightDataIndex(records);
+        FlightScheduleService testService = new FlightScheduleService(testIndex);
+
+        FlightScheduleService.FlightScheduleAnalysis analysis =
+            testService.analyzeFlightSchedule("WN", "5114");
+
+        assertNotNull(analysis);
+
+        // 3 legs should produce 6 segments:
+        // - 3 direct: PHX-LAS, LAS-SFO, SFO-SEA
+        // - 3 through: PHX-SFO (via LAS), PHX-SEA (via LAS,SFO), LAS-SEA (via SFO)
+        assertEquals(6, analysis.bookableSegments.size(),
+            "3-leg flight should produce 6 segments");
+
+        long directLegs = analysis.bookableSegments.stream()
+            .filter(FlightSegment::isDirect).count();
+        long throughConnections = analysis.bookableSegments.stream()
+            .filter(FlightSegment::isThrough).count();
+
+        assertEquals(3, directLegs, "Should have 3 direct leg segments");
+        assertEquals(3, throughConnections, "Should have 3 through connection segments");
+
+        // Check the longest through connection (PHX-SEA via LAS,SFO)
+        FlightSegment phxSea = analysis.bookableSegments.stream()
+            .filter(s -> s.getOriginAirport().equals("PHX") &&
+                        s.getDestinationAirport().equals("SEA") &&
+                        s.isThrough())
+            .findFirst()
+            .orElse(null);
+
+        assertNotNull(phxSea, "Should have PHX-SEA through connection");
+        assertEquals(2, phxSea.getIntermediateStops().size(),
+            "PHX-SEA should have 2 intermediate stops");
+        assertEquals(3, phxSea.getLegCount(), "PHX-SEA should be 3 legs");
+    }
+
+    @Test
+    void testRoutePattern() {
+        // Create 2-leg test data
+        List<ASQPFlightRecord> records = new ArrayList<>();
+        records.add(createFlight("WN", "4283", "ORD", "DAL",
+            LocalDate.of(2025, 1, 1), LocalTime.of(7, 30), LocalTime.of(10, 5),
+            false, LocalTime.of(7, 23), LocalTime.of(9, 43)));
+        records.add(createFlight("WN", "4283", "DAL", "MCO",
+            LocalDate.of(2025, 1, 1), LocalTime.of(10, 40), LocalTime.of(14, 10),
+            false, LocalTime.of(10, 33), LocalTime.of(13, 54)));
+
+        FlightDataIndex testIndex = new FlightDataIndex(records);
+        FlightScheduleService testService = new FlightScheduleService(testIndex);
+
+        FlightScheduleService.FlightScheduleAnalysis analysis =
+            testService.analyzeFlightSchedule("WN", "4283");
+
+        assertNotNull(analysis.routePattern);
+        // Route pattern should be ORD-DAL-MCO for the 2-leg operation
+        assertTrue(analysis.routePattern.contains("ORD"));
+        assertTrue(analysis.routePattern.contains("DAL"));
+        assertTrue(analysis.routePattern.contains("MCO"));
     }
 }
