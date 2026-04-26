@@ -21,12 +21,6 @@
       <artifactId>commons-csv</artifactId>
     </dependency>
 
-    <!-- Gson for JSON parsing -->
-    <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-    </dependency>
-
     <!-- JGraphT for graph analysis -->
     <dependency>
       <groupId>org.jgrapht</groupId>

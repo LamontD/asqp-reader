@@ -203,9 +203,6 @@ public class FlightScheduleService {
      * Determines if a flight was on-time (within 15 minutes of schedule)
      */
     private boolean isOnTime(ASQPFlightRecord record) {
-        if (record.getScheduledCrsDeparture() == null || record.getGateDeparture().isEmpty()) {
-            return false;
-        }
         Integer delay = calculateDepartureDelay(record);
         return delay != null && delay <= 15;
     }
@@ -333,19 +330,6 @@ public class FlightScheduleService {
         public final List<FlightSegment> bookableSegments;
         public final boolean isMultiRoute;
         public final String routePattern;
-
-        public FlightScheduleAnalysis(String carrierCode, String flightNumber,
-                                     String origin, String destination,
-                                     LocalTime typicalDeparture, LocalTime typicalArrival,
-                                     Set<DayOfWeek> operatingDays, Map<DayOfWeek, Long> dayFrequency,
-                                     long totalOperations, long operatedCount, long cancelledCount,
-                                     double completionRate, double onTimeRate, Double avgDelay,
-                                     Map<String, Long> routeFrequencies) {
-            this(carrierCode, flightNumber, origin, destination, typicalDeparture, typicalArrival,
-                 operatingDays, dayFrequency, totalOperations, operatedCount, cancelledCount,
-                 completionRate, onTimeRate, avgDelay, routeFrequencies,
-                 Collections.emptyList(), false, null);
-        }
 
         public FlightScheduleAnalysis(String carrierCode, String flightNumber,
                                      String origin, String destination,

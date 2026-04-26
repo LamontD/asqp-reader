@@ -13,9 +13,8 @@ import java.util.stream.Collectors;
 /**
  * Renders the carrier view screen
  */
-public class CarrierView implements ViewRenderer {
+public class CarrierView {
 
-    @Override
     public void render(FlightDataIndex index, Scanner scanner) {
         CarrierCodeMapper carrierMapper = CarrierCodeMapper.getDefault();
         AirportCodeMapper airportMapper = AirportCodeMapper.getDefault();
@@ -69,8 +68,9 @@ public class CarrierView implements ViewRenderer {
                     String airport = entry.getKey();
                     String city = airportMapper.getAirportCity(airport);
                     long count = entry.getValue();
-                    String bar = ViewUtils.createBar(count, 40,
-                            airportCounts.values().stream().mapToLong(Long::longValue).max().orElse(1));
+                    long maxValue = airportCounts.values().stream().mapToLong(Long::longValue).max().orElse(1);
+                    int barLen = maxValue == 0 ? 0 : (int) ((count * 40) / maxValue);
+                    String bar = "[" + "=".repeat(Math.max(0, barLen)) + "]";
                     System.out.printf("  %s (%s): %3d flights %s%n",
                             airport, city, count, bar);
                 });

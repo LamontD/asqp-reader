@@ -10,9 +10,8 @@ import java.util.Scanner;
 /**
  * Submenu controller for Airplane Report options
  */
-public class AirplaneReportSubmenu implements SubmenuController {
+public class AirplaneReportSubmenu {
 
-    @Override
     public void display(FlightDataIndex index, Scanner scanner) {
         boolean running = true;
 

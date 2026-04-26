@@ -14,11 +14,10 @@ import java.util.Set;
 /**
  * View for route graph analysis and shortest path queries
  */
-public class RouteAnalysisView implements ViewRenderer {
+public class RouteAnalysisView {
 
     private RouteGraphService graphService;
 
-    @Override
     public void render(FlightDataIndex index, Scanner scanner) {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("ROUTE NETWORK ANALYSIS");

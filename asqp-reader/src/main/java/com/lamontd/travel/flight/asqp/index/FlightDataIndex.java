@@ -3,13 +3,15 @@ package com.lamontd.travel.flight.asqp.index;
 import com.lamontd.travel.flight.index.RouteIndex;
 import com.lamontd.travel.flight.mapper.AirportCodeMapper;
 import com.lamontd.travel.flight.mapper.CarrierCodeMapper;
-import com.lamontd.travel.flight.mapper.CountryCodeMapper;
 import com.lamontd.travel.flight.util.DistanceCalculator;
 import com.lamontd.travel.flight.util.PerformanceTimer;
 import com.lamontd.travel.flight.asqp.model.ASQPFlightRecord;
+import com.lamontd.travel.flight.asqp.FlightConverter;
+import com.lamontd.travel.flight.model.ScheduledFlight;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,6 +35,9 @@ public class FlightDataIndex implements RouteIndex {
     // Pre-computed route distances (origin-destination -> distance in miles)
     public final Map<String, Double> routeDistances;
 
+    // Pre-computed scheduled flights by route (origin-destination -> list of schedules)
+    public final Map<String, List<ScheduledFlight>> scheduledFlightsByRoute;
+
     // Cached statistics (computed once)
     public final long totalFlights;
     public final long operatedFlights;
@@ -53,9 +58,8 @@ public class FlightDataIndex implements RouteIndex {
 
         // Show mapper info
         CarrierCodeMapper carrierMapper = CarrierCodeMapper.getDefault();
-        CountryCodeMapper countryMapper = CountryCodeMapper.getDefault();
-        logger.info("Reference data loaded: {} carriers, {} airports, {} countries",
-                carrierMapper.size(), airportMapper.size(), countryMapper.size());
+        logger.info("Reference data loaded: {} carriers, {} airports",
+                carrierMapper.size(), airportMapper.size());
 
         try (var timer = new PerformanceTimer("Build flight data indices")) {
 
@@ -121,11 +125,16 @@ public class FlightDataIndex implements RouteIndex {
                             route -> route,
                             distanceCalculator::calculateRouteDistance
                     ));
+
+            // Build scheduled flights index
+            logger.debug("Building scheduled flights index...");
+            this.scheduledFlightsByRoute = buildScheduledFlightsIndex(records);
         }
 
-        logger.info("Indices: {} carriers, {} airports, {} tail numbers, {} flight numbers, {} dates, {} routes",
+        logger.info("Indices: {} carriers, {} airports, {} tail numbers, {} flight numbers, {} dates, {} routes, {} scheduled flights",
                 byCarrier.size(), this.uniqueAirports, byTailNumber.size(),
-                byFlightNumber.size(), byDate.size(), routeDistances.size());
+                byFlightNumber.size(), byDate.size(), routeDistances.size(),
+                scheduledFlightsByRoute.values().stream().mapToInt(List::size).sum());
     }
 
     public List<ASQPFlightRecord> getByCarrier(String carrierCode) {
@@ -145,15 +154,99 @@ public class FlightDataIndex implements RouteIndex {
     }
 
     /**
-     * Gets the distance in miles between two airports
+     * Gets all scheduled flights for a specific route
      * @param origin Origin airport code
      * @param destination Destination airport code
-     * @return Distance in miles, or 0.0 if airports not found or distance not computable
+     * @return List of scheduled flights operating this route
      */
-    public double getDistance(String origin, String destination) {
+    public List<ScheduledFlight> getScheduledFlightsByRoute(String origin, String destination) {
         String routeKey = origin + "-" + destination;
-        return routeDistances.getOrDefault(routeKey,
-                distanceCalculator.calculateRouteDistance(routeKey)); // fallback calculation
+        return scheduledFlightsByRoute.getOrDefault(routeKey, Collections.emptyList());
+    }
+
+    /**
+     * Builds the scheduled flights index by grouping flight records and inferring schedules
+     */
+    private Map<String, List<ScheduledFlight>> buildScheduledFlightsIndex(List<ASQPFlightRecord> records) {
+        // Group by carrier + flight# + origin + destination (unique scheduled flight key)
+        Map<String, List<ASQPFlightRecord>> groupedBySchedule = records.stream()
+                .collect(Collectors.groupingBy(r ->
+                    String.format("%s|%s|%s|%s",
+                        r.getCarrierCode(),
+                        r.getFlightNumber(),
+                        r.getOrigin(),
+                        r.getDestination()
+                    )));
+
+        // Convert each group to a ScheduledFlight
+        List<ScheduledFlight> allSchedules = groupedBySchedule.values().stream()
+                .map(this::inferScheduledFlight)
+                .filter(Objects::nonNull)
+                .toList();
+
+        // Index by route (origin-destination)
+        return allSchedules.stream()
+                .collect(Collectors.groupingBy(
+                    s -> s.getOriginAirport() + "-" + s.getDestinationAirport()
+                ));
+    }
+
+    /**
+     * Infers a ScheduledFlight from a list of observed flight records
+     */
+    private ScheduledFlight inferScheduledFlight(List<ASQPFlightRecord> records) {
+        if (records.isEmpty()) {
+            return null;
+        }
+
+        ASQPFlightRecord template = records.get(0);
+
+        // Determine date range
+        LocalDate minDate = records.stream()
+                .map(ASQPFlightRecord::getDepartureDate)
+                .min(LocalDate::compareTo)
+                .orElse(null);
+
+        LocalDate maxDate = records.stream()
+                .map(ASQPFlightRecord::getDepartureDate)
+                .max(LocalDate::compareTo)
+                .orElse(null);
+
+        // Determine days of operation
+        Set<DayOfWeek> daysOfOperation = records.stream()
+                .map(r -> r.getDepartureDate().getDayOfWeek())
+                .collect(Collectors.toSet());
+
+        // Use most common scheduled time (mode) - prefer CRS times
+        var departureTime = records.stream()
+                .map(ASQPFlightRecord::getScheduledCrsDeparture)
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(t -> t, Collectors.counting()))
+                .entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(template.getScheduledCrsDeparture());
+
+        var arrivalTime = records.stream()
+                .map(ASQPFlightRecord::getScheduledCrsArrival)
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(t -> t, Collectors.counting()))
+                .entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(template.getScheduledCrsArrival());
+
+        return ScheduledFlight.builder()
+                .carrierCode(template.getCarrierCode())
+                .flightNumber(template.getFlightNumber())
+                .originAirport(template.getOrigin())
+                .destinationAirport(template.getDestination())
+                .scheduledDepartureTime(departureTime)
+                .scheduledArrivalTime(arrivalTime)
+                .effectiveFrom(minDate)
+                .effectiveUntil(maxDate)
+                .daysOfOperation(daysOfOperation.size() == 7 ? null : daysOfOperation)
+                .build();
     }
 
     // RouteIndex interface implementation

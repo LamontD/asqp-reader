@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 /**
  * Renders the flight number view screen
  */
-public class FlightView implements ViewRenderer {
+public class FlightView {
 
     /**
      * Rendering mode for the view
@@ -57,7 +57,6 @@ public class FlightView implements ViewRenderer {
         this.renderMode = renderMode;
     }
 
-    @Override
     public void render(FlightDataIndex index, Scanner scanner) {
         AirportCodeMapper airportMapper = AirportCodeMapper.getDefault();
         CarrierCodeMapper carrierMapper = CarrierCodeMapper.getDefault();
@@ -148,7 +147,7 @@ public class FlightView implements ViewRenderer {
                     routeBuilder.append(leg.getOrigin());
                 }
                 routeBuilder.append(" -> ").append(leg.getDestination());
-                routeDistance += index.getDistance(leg.getOrigin(), leg.getDestination());
+                routeDistance += index.getRouteDistance(leg.getOrigin(), leg.getDestination());
             }
 
             String routeKey = routeBuilder.toString();

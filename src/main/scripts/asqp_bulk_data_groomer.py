@@ -6,9 +6,10 @@ This script processes Airline Service Quality Performance 234 data from the Bure
 of Transportation Statistics into formats compatible with the Flight Data Analysis
 Java application.
 
-Supports two output formats:
+Supports three output formats:
   - ASQPFlightRecord: Full ASQP data with 20 fields (default)
   - FlightRecord: Simplified flight record with core fields only
+  - BookableFlight: Schedule data with 7 fields for travel planning
 
 Usage:
     python asqp_bulk_data_groomer.py <input_directory> <output_directory> [options]
@@ -18,23 +19,29 @@ Arguments:
     output_directory: Directory for processed output files (created if needed)
 
 Options:
-    --format, -f: Output format (choices: asqp, flightrecord, both; default: asqp)
+    --format, -f: Output format (choices: asqp, flightrecord, bookableflight, both, all; default: asqp)
     --asqp-output-dir: Separate output directory for ASQP format
     --flightrecord-output-dir: Separate output directory for FlightRecord format
+    --bookableflight-output-dir: Separate output directory for BookableFlight format
 
 Examples:
     # Default: ASQPFlightRecord format
     python asqp_bulk_data_groomer.py ./raw_data ./processed_data
 
-    # FlightRecord format only
-    python asqp_bulk_data_groomer.py ./raw_data ./processed_data --format flightrecord
+    # BookableFlight format only
+    python asqp_bulk_data_groomer.py ./raw_data ./processed_data --format bookableflight
 
-    # Both formats to same directory
+    # Both ASQP and FlightRecord formats
     python asqp_bulk_data_groomer.py ./raw_data ./processed_data --format both
 
-    # Both formats to different directories
-    python asqp_bulk_data_groomer.py ./raw_data ./output --format both \
-        --flightrecord-output-dir ./flightrecord_output
+    # All three formats to same directory
+    python asqp_bulk_data_groomer.py ./raw_data ./processed_data --format all
+
+    # All formats to different directories
+    python asqp_bulk_data_groomer.py ./raw_data ./output --format all \
+        --asqp-output-dir ./asqp \
+        --flightrecord-output-dir ./flightrecord \
+        --bookableflight-output-dir ./schedules
 
 Author: ASQP Reader Project
 License: Part of the ASQP data analysis suite
@@ -50,7 +57,8 @@ from pathlib import Path
 # File extensions by format
 FORMAT_EXTENSIONS = {
     'asqp': '.asqpflightrecord.csv',
-    'flightrecord': '.flightrecord.csv'
+    'flightrecord': '.flightrecord.csv',
+    'bookableflight': '.bookableflight.csv'
 }
 
 
@@ -124,6 +132,18 @@ class ASQPFlightRecord:
             "cancellation_code": self.cancellation_code
         }
 
+    def to_bookableflight_dict(self) -> Dict[str, str]:
+        """Convert to BookableFlight format (schedule fields only - 7 fields)."""
+        return {
+            "carrier_code": self.carrier_code,
+            "flight_number": self.flight_number,
+            "origin": self.origin,
+            "destination": self.destination,
+            "departure_date": self.departure_date,
+            "scheduled_departure": self.scheduled_crs_departure,
+            "scheduled_arrival": self.scheduled_crs_arrival
+        }
+
 
 def ingest_csv(filepath: str) -> List[ASQPFlightRecord]:
     """Read CSV file with '|' separator and return list of records."""
@@ -179,6 +199,22 @@ def write_flightrecord_csv(records: List[ASQPFlightRecord], output_filepath: str
             writer.writerow([data[h] for h in headers])
 
 
+def write_bookableflight_csv(records: List[ASQPFlightRecord], output_filepath: str) -> None:
+    """Write BookableFlight format CSV (schedule fields only - 7 fields)."""
+    headers = [
+        "carrier_code", "flight_number", "origin", "destination",
+        "departure_date", "scheduled_departure", "scheduled_arrival"
+    ]
+
+    with open(output_filepath, 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter='|')
+        writer.writerow(headers)
+
+        for record in records:
+            data = record.to_bookableflight_dict()
+            writer.writerow([data[h] for h in headers])
+
+
 def get_output_filename(input_filename: str, format_type: str) -> str:
     """Generate output filename based on format type."""
     base_name = Path(input_filename).stem
@@ -198,8 +234,10 @@ def process_file(input_filepath: Path, output_dir: Path, format_type: str) -> Tu
 
     if format_type == 'asqp':
         write_asqp_csv(records, str(output_filepath))
-    else:  # flightrecord
+    elif format_type == 'flightrecord':
         write_flightrecord_csv(records, str(output_filepath))
+    elif format_type == 'bookableflight':
+        write_bookableflight_csv(records, str(output_filepath))
 
     return len(records), output_filename
 
@@ -228,7 +266,7 @@ Examples:
                        help='Directory for processed output files')
 
     parser.add_argument('--format', '-f',
-                       choices=['asqp', 'flightrecord', 'both'],
+                       choices=['asqp', 'flightrecord', 'bookableflight', 'both', 'all'],
                        default='asqp',
                        help='Output format (default: asqp)')
 
@@ -236,6 +274,8 @@ Examples:
                        help='Separate output directory for ASQP format')
     parser.add_argument('--flightrecord-output-dir',
                        help='Separate output directory for FlightRecord format')
+    parser.add_argument('--bookableflight-output-dir',
+                       help='Separate output directory for BookableFlight format')
 
     args = parser.parse_args()
 
@@ -254,13 +294,16 @@ Examples:
     # Determine output directories
     asqp_dir = Path(args.asqp_output_dir) if args.asqp_output_dir else output_dir
     flightrecord_dir = Path(args.flightrecord_output_dir) if args.flightrecord_output_dir else output_dir
+    bookableflight_dir = Path(args.bookableflight_output_dir) if args.bookableflight_output_dir else output_dir
 
     # Create output directories
     try:
-        if args.format in ['asqp', 'both']:
+        if args.format in ['asqp', 'both', 'all']:
             asqp_dir.mkdir(parents=True, exist_ok=True)
-        if args.format in ['flightrecord', 'both']:
+        if args.format in ['flightrecord', 'both', 'all']:
             flightrecord_dir.mkdir(parents=True, exist_ok=True)
+        if args.format in ['bookableflight', 'all']:
+            bookableflight_dir.mkdir(parents=True, exist_ok=True)
     except Exception as e:
         print(f"Error: Could not create output directory: {e}", file=sys.stderr)
         return 1
@@ -284,16 +327,23 @@ Examples:
             print(f"Processing: {input_file.name}")
 
             # Process ASQP format
-            if args.format in ['asqp', 'both']:
+            if args.format in ['asqp', 'both', 'all']:
                 record_count, output_filename = process_file(input_file, asqp_dir, 'asqp')
                 print(f"  -> Wrote {record_count} records to: {output_filename}")
                 total_records += record_count
 
             # Process FlightRecord format
-            if args.format in ['flightrecord', 'both']:
+            if args.format in ['flightrecord', 'both', 'all']:
                 record_count, output_filename = process_file(input_file, flightrecord_dir, 'flightrecord')
                 print(f"  -> Wrote {record_count} records to: {output_filename}")
-                if args.format != 'both':
+                if args.format not in ['both', 'all']:
+                    total_records += record_count
+
+            # Process BookableFlight format
+            if args.format in ['bookableflight', 'all']:
+                record_count, output_filename = process_file(input_file, bookableflight_dir, 'bookableflight')
+                print(f"  -> Wrote {record_count} records to: {output_filename}")
+                if args.format not in ['all']:
                     total_records += record_count
 
             successful_files += 1
@@ -309,10 +359,12 @@ Examples:
     print(f"Successfully processed: {successful_files} file(s)")
     print(f"Failed: {failed_files} file(s)")
     print(f"Total records processed: {total_records}")
-    if args.format in ['asqp', 'both']:
+    if args.format in ['asqp', 'both', 'all']:
         print(f"ASQP output directory: {asqp_dir.absolute()}")
-    if args.format in ['flightrecord', 'both']:
+    if args.format in ['flightrecord', 'both', 'all']:
         print(f"FlightRecord output directory: {flightrecord_dir.absolute()}")
+    if args.format in ['bookableflight', 'all']:
+        print(f"BookableFlight output directory: {bookableflight_dir.absolute()}")
 
     return 0 if failed_files == 0 else 1
 

@@ -31,7 +31,7 @@ cd asqp-reader && mvn clean package
 
 ### Run Tests
 ```bash
-# Run all tests (89 total: 50 in flight-core, 39 in asqp-reader)
+# Run all tests (88 total: 49 in flight-core, 39 in asqp-reader)
 mvn test
 
 # Run tests for specific module
@@ -79,7 +79,6 @@ The project uses three distinct model types that serve different purposes:
 The **FlightConverter** class (`asqp-reader/FlightConverter.java`) converts between these representations:
 - `toFlightRecord()`: ASQP → FlightRecord (for analyzing actual operations)
 - `toScheduledFlight()`: ASQP → ScheduledFlight (for single instance)
-- `buildRecurringSchedule()`: Multiple ASQP records → ScheduledFlight (for recurring schedules)
 
 ### Reference Data Mappers (flight-core)
 
@@ -92,10 +91,6 @@ All mappers follow a common pattern with static factory methods:
 - **AirportCodeMapper**: Maps 3-letter codes (e.g., "ATL") to airport details using OpenFlights (6,033+ airports)
   - `AirportCodeMapper.getDefault()` loads from `resources/data/airports.dat`
   - Returns `AirportInfo` with name, city, country, lat/lon, altitude, timezone, ICAO code
-
-- **CountryCodeMapper**: Maps ISO 3166-1 country codes (193 countries)
-  - `CountryCodeMapper.getDefault()` loads from `resources/data/countries.json`
-  - Returns `CountryInfo` with alpha-2, alpha-3, numeric codes, and country name
 
 - **CancellationCodeMapper**: Maps single-letter cancellation codes (A=Carrier, B=Weather, C=NAS, D=Security)
   - Hardcoded mappings in the class

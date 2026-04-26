@@ -13,6 +13,7 @@
   <modules>
     <module>flight-core</module>
     <module>asqp-reader</module>
+    <module>flight-schedule-reader</module>
   </modules>
 
   <properties>

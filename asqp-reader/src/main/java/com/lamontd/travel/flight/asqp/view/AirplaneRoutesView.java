@@ -13,9 +13,8 @@ import java.util.stream.Collectors;
  * Renders daily route patterns for a tail number without detailed leg information
  * Shows only: date, route chain, and total distance
  */
-public class AirplaneRoutesView implements ViewRenderer {
+public class AirplaneRoutesView {
 
-    @Override
     public void render(FlightDataIndex index, Scanner scanner) {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("AIRPLANE ROUTES");
@@ -110,7 +109,7 @@ public class AirplaneRoutesView implements ViewRenderer {
                     route.append(flight.getOrigin());
                 }
                 route.append(" -> ").append(flight.getDestination());
-                totalDistance += index.getDistance(flight.getOrigin(), flight.getDestination());
+                totalDistance += index.getRouteDistance(flight.getOrigin(), flight.getDestination());
             }
 
             System.out.printf("  %s: %s (%,.0f miles)%n", date, route, totalDistance);

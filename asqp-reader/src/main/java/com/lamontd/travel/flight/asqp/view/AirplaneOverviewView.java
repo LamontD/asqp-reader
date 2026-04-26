@@ -16,9 +16,8 @@ import java.util.stream.Collectors;
  * Renders a high-level overview for a specific tail number
  * Shows: tail number, days active, total miles traveled, date range
  */
-public class AirplaneOverviewView implements ViewRenderer {
+public class AirplaneOverviewView {
 
-    @Override
     public void render(FlightDataIndex index, Scanner scanner) {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("AIRPLANE OVERVIEW");
@@ -59,7 +58,7 @@ public class AirplaneOverviewView implements ViewRenderer {
         // Calculate total miles traveled
         double totalMiles = 0;
         for (ASQPFlightRecord flight : operatedFlights) {
-            totalMiles += index.getDistance(flight.getOrigin(), flight.getDestination());
+            totalMiles += index.getRouteDistance(flight.getOrigin(), flight.getDestination());
         }
 
         // Find date range

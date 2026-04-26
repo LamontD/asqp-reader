@@ -12,9 +12,8 @@ import java.util.stream.Collectors;
 /**
  * Renders the airport view screen
  */
-public class AirportView implements ViewRenderer {
+public class AirportView {
 
-    @Override
     public void render(FlightDataIndex index, Scanner scanner) {
         AirportCodeMapper airportMapper = AirportCodeMapper.getDefault();
         CancellationCodeMapper cancellationMapper = CancellationCodeMapper.getDefault();
@@ -75,8 +74,10 @@ public class AirportView implements ViewRenderer {
             long cancelled = cancelledByDate.getOrDefault(date, 0L);
 
             System.out.println("\n  " + date + ":");
-            String operatedBar = ViewUtils.createBar(operated, 40, maxCount);
-            String cancelledBar = ViewUtils.createBar(cancelled, 40, maxCount);
+            int operatedBarLen = maxCount == 0 ? 0 : (int) ((operated * 40) / maxCount);
+            String operatedBar = "[" + "=".repeat(Math.max(0, operatedBarLen)) + "]";
+            int cancelledBarLen = maxCount == 0 ? 0 : (int) ((cancelled * 40) / maxCount);
+            String cancelledBar = "[" + "=".repeat(Math.max(0, cancelledBarLen)) + "]";
 
             System.out.printf("    Operated:  %3d %s%n", operated, operatedBar);
             System.out.printf("    Cancelled: %3d %s%n", cancelled, cancelledBar);

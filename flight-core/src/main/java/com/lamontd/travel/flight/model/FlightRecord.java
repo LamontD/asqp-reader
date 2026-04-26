@@ -304,8 +304,7 @@ public class FlightRecord {
         IN_FLIGHT,      // Flight is in the air
         LANDED,         // Flight has landed
         ARRIVED,        // Flight has arrived at gate
-        CANCELLED,      // Flight was cancelled
-        DIVERTED        // Flight was diverted to another airport
+        CANCELLED       // Flight was cancelled
     }
 
     /**

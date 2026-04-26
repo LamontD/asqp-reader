@@ -16,9 +16,8 @@ import java.util.stream.Collectors;
 /**
  * View for displaying inferred flight schedules
  */
-public class FlightScheduleView implements ViewRenderer {
+public class FlightScheduleView {
 
-    @Override
     public void render(FlightDataIndex index, Scanner scanner) {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("FLIGHT SCHEDULE ANALYSIS");

@@ -11,9 +11,8 @@ import java.util.stream.Collectors;
 /**
  * Renders the data overview screen
  */
-public class DataOverviewView implements ViewRenderer {
+public class DataOverviewView {
 
-    @Override
     public void render(FlightDataIndex index, Scanner scanner) {
         CancellationCodeMapper cancellationMapper = CancellationCodeMapper.getDefault();
 

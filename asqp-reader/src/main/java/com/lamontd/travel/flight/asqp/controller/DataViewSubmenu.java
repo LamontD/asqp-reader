@@ -9,9 +9,8 @@ import java.util.Scanner;
 /**
  * Submenu controller for Data View options (Carrier and Airport views)
  */
-public class DataViewSubmenu implements SubmenuController {
+public class DataViewSubmenu {
 
-    @Override
     public void display(FlightDataIndex index, Scanner scanner) {
         boolean running = true;
 

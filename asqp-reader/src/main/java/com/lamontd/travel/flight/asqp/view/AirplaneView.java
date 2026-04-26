@@ -13,9 +13,8 @@ import java.util.stream.Collectors;
 /**
  * Renders the airplane (tail number) view screen
  */
-public class AirplaneView implements ViewRenderer {
+public class AirplaneView {
 
-    @Override
     public void render(FlightDataIndex index, Scanner scanner) {
         AirportCodeMapper airportMapper = AirportCodeMapper.getDefault();
 
@@ -108,7 +107,7 @@ public class AirplaneView implements ViewRenderer {
                     route.append(flight.getOrigin());
                 }
                 route.append(" -> ").append(flight.getDestination());
-                totalDistance += index.getDistance(flight.getOrigin(), flight.getDestination());
+                totalDistance += index.getRouteDistance(flight.getOrigin(), flight.getDestination());
             }
 
             System.out.println("\n  " + date + ":");
