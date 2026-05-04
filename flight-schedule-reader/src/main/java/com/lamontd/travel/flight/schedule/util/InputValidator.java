@@ -68,6 +68,29 @@ public class InputValidator {
     }
 
     /**
+     * Validates a return date against a departure date.
+     *
+     * @param departureDate The departure date
+     * @param returnDateInput Return date string in yyyy-MM-dd format
+     * @return Optional containing LocalDate if valid, empty if invalid (error message displayed)
+     */
+    public static Optional<LocalDate> validateReturnDate(LocalDate departureDate, String returnDateInput) {
+        Optional<LocalDate> returnDate = parseTravelDate(returnDateInput);
+        if (returnDate.isEmpty()) {
+            System.out.println("\nInvalid return date format. Please use yyyy-MM-dd (e.g., 2025-06-15).");
+            return Optional.empty();
+        }
+
+        if (returnDate.get().isBefore(departureDate)) {
+            System.out.println("\n✗ Return date cannot be before departure date.");
+            System.out.printf("Departure: %s | Return: %s%n", departureDate, returnDate.get());
+            return Optional.empty();
+        }
+
+        return returnDate;
+    }
+
+    /**
      * Displays a validation error message.
      *
      * @param message Error message to display

@@ -30,6 +30,8 @@ class TravelPlannerControllerTest {
     @Test
     void testValidDirectFlightSearch() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type (default one-way)
             "JFK",          // origin
             "LAX",          // destination
             "2025-06-10",   // date
@@ -50,6 +52,8 @@ class TravelPlannerControllerTest {
     @Test
     void testInvalidOriginAirport() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode
+            "",             // trip type
             "XXX",          // invalid origin
             "LAX",
             "2025-06-10",
@@ -66,6 +70,8 @@ class TravelPlannerControllerTest {
     @Test
     void testInvalidDestinationAirport() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "ZZZ",          // invalid destination
             "2025-06-10",
@@ -81,6 +87,8 @@ class TravelPlannerControllerTest {
     @Test
     void testInvalidDate() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "LAX",
             "06/10/2025",   // wrong format
@@ -97,6 +105,8 @@ class TravelPlannerControllerTest {
     @Test
     void testSameOriginAndDestination() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "JFK",          // same as origin
             "2025-06-10",
@@ -112,6 +122,8 @@ class TravelPlannerControllerTest {
     @Test
     void testMorningTimeFilter() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "LAX",
             "2025-06-10",
@@ -129,6 +141,8 @@ class TravelPlannerControllerTest {
     @Test
     void testAfternoonTimeFilter() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "LAX",
             "2025-06-10",
@@ -145,6 +159,8 @@ class TravelPlannerControllerTest {
     @Test
     void testEveningTimeFilter() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "LAX",
             "2025-06-10",
@@ -161,6 +177,8 @@ class TravelPlannerControllerTest {
     @Test
     void testAnytimeDefaultFilter() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "LAX",
             "2025-06-10",
@@ -180,6 +198,8 @@ class TravelPlannerControllerTest {
     @Test
     void testNoFlightsFound() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "LAX",
             "2025-12-25",   // date with no flights
@@ -195,6 +215,8 @@ class TravelPlannerControllerTest {
     @Test
     void testConnectionsIncluded() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "LAX",
             "2025-06-10",
@@ -211,6 +233,8 @@ class TravelPlannerControllerTest {
     @Test
     void testTop10Limiting() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "LAX",
             "2025-06-10",
@@ -227,6 +251,8 @@ class TravelPlannerControllerTest {
     @Test
     void testCarrierNamesDisplayed() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "LAX",
             "2025-06-10",
@@ -243,6 +269,8 @@ class TravelPlannerControllerTest {
     @Test
     void testCityNamesDisplayed() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JFK",
             "LAX",
             "2025-06-10",
@@ -258,6 +286,8 @@ class TravelPlannerControllerTest {
     @Test
     void testAirportCodeLengthValidation() {
         Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // trip type
             "JF",           // too short
             "LAX",
             "2025-06-10",
@@ -268,5 +298,148 @@ class TravelPlannerControllerTest {
 
         String output = outputCapture.getOutput();
         assertTrue(output.contains("Invalid airport code") || output.contains("Must be 3 letters"));
+    }
+
+    @Test
+    void testValidRoundTripSearch() {
+        Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "Round-trip",   // trip type
+            "JFK",          // origin
+            "LAX",          // destination
+            "2025-06-10",   // departure date
+            "",             // anytime departure
+            "2025-06-15",   // return date
+            ""              // anytime return
+        );
+
+        controller.display(index, scanner);
+
+        String output = outputCapture.getOutput();
+        assertTrue(output.contains("ROUND-TRIP OPTIONS"));
+        assertTrue(output.contains("JFK"));
+        assertTrue(output.contains("LAX"));
+        assertTrue(output.contains("OUTBOUND"));
+        assertTrue(output.contains("RETURN"));
+        assertTrue(output.contains("2025-06-10"));
+        assertTrue(output.contains("2025-06-15"));
+    }
+
+    @Test
+    void testRoundTripWithTimeFilters() {
+        Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "R",            // round-trip
+            "JFK",
+            "LAX",
+            "2025-06-10",
+            "Morning",      // morning departure
+            "2025-06-15",
+            "Evening"       // evening return
+        );
+
+        controller.display(index, scanner);
+
+        String output = outputCapture.getOutput();
+        assertTrue(output.contains("ROUND-TRIP OPTIONS"));
+        assertTrue(output.contains("Morning"));
+        assertTrue(output.contains("Evening"));
+    }
+
+    @Test
+    void testRoundTripReturnBeforeDeparture() {
+        Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "Round-trip",
+            "JFK",
+            "LAX",
+            "2025-06-15",
+            "",
+            "2025-06-10",   // return before departure - invalid
+            ""
+        );
+
+        controller.display(index, scanner);
+
+        String output = outputCapture.getOutput();
+        assertTrue(output.contains("Return date cannot be before departure date"));
+    }
+
+    @Test
+    void testRoundTripSameDay() {
+        Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "Round-trip",
+            "JFK",
+            "LAX",
+            "2025-06-10",   // depart same day
+            "Morning",
+            "2025-06-10",   // return same day - valid
+            "Evening"
+        );
+
+        controller.display(index, scanner);
+
+        String output = outputCapture.getOutput();
+        assertTrue(output.contains("ROUND-TRIP OPTIONS") || output.contains("No return flights found"));
+        // May not have return flights on same day, so either outcome is valid
+    }
+
+    @Test
+    void testRoundTripNoReturnFlights() {
+        Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "Round-trip",
+            "JFK",
+            "LAX",
+            "2025-06-10",
+            "",
+            "2025-12-25",   // date with no return flights
+            ""
+        );
+
+        controller.display(index, scanner);
+
+        String output = outputCapture.getOutput();
+        assertTrue(output.contains("No return flights found"));
+    }
+
+    @Test
+    void testOneWayStillWorks() {
+        Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "One-way",      // explicit one-way
+            "JFK",
+            "LAX",
+            "2025-06-10",
+            "Morning"
+        );
+
+        controller.display(index, scanner);
+
+        String output = outputCapture.getOutput();
+        assertTrue(output.contains("TRAVEL OPTIONS"));
+        assertTrue(output.contains("DIRECT"));
+        assertFalse(output.contains("ROUND-TRIP"));
+        assertFalse(output.contains("OUTBOUND"));
+        assertFalse(output.contains("RETURN"));
+    }
+
+    @Test
+    void testDefaultOneWay() {
+        Scanner scanner = ControllerTestUtils.createScanner(
+            "",             // search mode (default airport)
+            "",             // blank = default to one-way
+            "JFK",
+            "LAX",
+            "2025-06-10",
+            ""
+        );
+
+        controller.display(index, scanner);
+
+        String output = outputCapture.getOutput();
+        assertTrue(output.contains("TRAVEL OPTIONS"));
+        assertFalse(output.contains("ROUND-TRIP"));
     }
 }

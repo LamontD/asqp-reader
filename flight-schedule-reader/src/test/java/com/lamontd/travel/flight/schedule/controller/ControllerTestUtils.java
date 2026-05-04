@@ -176,6 +176,58 @@ public class ControllerTestUtils {
                 .scheduledArrival(LocalTime.of(14, 0))
                 .build());
 
+        // Add return flights (LAX-JFK) for round-trip testing
+        flights.add(new FlightBuilder()
+                .carrierCode("AA")
+                .flightNumber("101")
+                .origin("LAX")
+                .destination("JFK")
+                .operatingDate(LocalDate.of(2025, 6, 10))
+                .scheduledDeparture(LocalTime.of(10, 0))
+                .scheduledArrival(LocalTime.of(18, 0))
+                .build());
+
+        flights.add(new FlightBuilder()
+                .carrierCode("AA")
+                .flightNumber("201")
+                .origin("LAX")
+                .destination("JFK")
+                .operatingDate(LocalDate.of(2025, 6, 15))
+                .scheduledDeparture(LocalTime.of(14, 0))
+                .scheduledArrival(LocalTime.of(22, 0))
+                .build());
+
+        flights.add(new FlightBuilder()
+                .carrierCode("DL")
+                .flightNumber("501")
+                .origin("LAX")
+                .destination("JFK")
+                .operatingDate(LocalDate.of(2025, 6, 15))
+                .scheduledDeparture(LocalTime.of(19, 0))
+                .scheduledArrival(LocalTime.of(3, 0))
+                .build());
+
+        // Add return connecting flights (LAX-ORD-JFK) for round-trip testing
+        flights.add(new FlightBuilder()
+                .carrierCode("UA")
+                .flightNumber("401")
+                .origin("LAX")
+                .destination("ORD")
+                .operatingDate(LocalDate.of(2025, 6, 15))
+                .scheduledDeparture(LocalTime.of(9, 0))
+                .scheduledArrival(LocalTime.of(15, 0))
+                .build());
+
+        flights.add(new FlightBuilder()
+                .carrierCode("UA")
+                .flightNumber("301")
+                .origin("ORD")
+                .destination("JFK")
+                .operatingDate(LocalDate.of(2025, 6, 15))
+                .scheduledDeparture(LocalTime.of(17, 0))
+                .scheduledArrival(LocalTime.of(20, 0))
+                .build());
+
         return new ScheduleFlightIndex(flights);
     }
 

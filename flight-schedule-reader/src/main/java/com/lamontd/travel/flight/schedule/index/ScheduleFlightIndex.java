@@ -196,6 +196,26 @@ public class ScheduleFlightIndex {
     }
 
     /**
+     * Returns set of airport codes that have flights on a given date.
+     * Includes both origin and destination airports.
+     *
+     * @param date Date to check for flight availability
+     * @return Set of airport codes with flights on that date
+     */
+    public Set<String> getAirportsWithFlights(LocalDate date) {
+        Set<String> airports = new HashSet<>();
+
+        for (BookableFlight flight : allFlights) {
+            if (flight.getOperatingDate().equals(date)) {
+                airports.add(flight.getOriginAirport());
+                airports.add(flight.getDestinationAirport());
+            }
+        }
+
+        return airports;
+    }
+
+    /**
      * Returns all unique dates that have flight data.
      */
     public Set<LocalDate> getAvailableDates() {

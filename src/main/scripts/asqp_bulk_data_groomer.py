@@ -12,11 +12,11 @@ Supports three output formats:
   - BookableFlight: Schedule data with 7 fields for travel planning
 
 Usage:
-    python asqp_bulk_data_groomer.py <input_directory> <output_directory> [options]
+    python asqp_bulk_data_groomer.py <input_directory> [output_directory] [options]
 
 Arguments:
     input_directory: Directory containing raw ASQP 234 CSV files (pipe-delimited)
-    output_directory: Directory for processed output files (created if needed)
+    output_directory: Directory for processed output files (optional if format-specific directories provided)
 
 Options:
     --format, -f: Output format (choices: asqp, flightrecord, bookableflight, both, all; default: asqp)
@@ -37,8 +37,8 @@ Examples:
     # All three formats to same directory
     python asqp_bulk_data_groomer.py ./raw_data ./processed_data --format all
 
-    # All formats to different directories
-    python asqp_bulk_data_groomer.py ./raw_data ./output --format all \
+    # All formats to different directories (output_dir optional when all specified)
+    python asqp_bulk_data_groomer.py ./raw_data --format all \
         --asqp-output-dir ./asqp \
         --flightrecord-output-dir ./flightrecord \
         --bookableflight-output-dir ./schedules
@@ -263,7 +263,8 @@ Examples:
     parser.add_argument('input_dir',
                        help='Directory containing raw ASQP CSV files')
     parser.add_argument('output_dir',
-                       help='Directory for processed output files')
+                       nargs='?',
+                       help='Directory for processed output files (optional if format-specific directories are provided)')
 
     parser.add_argument('--format', '-f',
                        choices=['asqp', 'flightrecord', 'bookableflight', 'both', 'all'],
@@ -280,7 +281,7 @@ Examples:
     args = parser.parse_args()
 
     input_dir = Path(args.input_dir)
-    output_dir = Path(args.output_dir)
+    output_dir = Path(args.output_dir) if args.output_dir else None
 
     # Validate input directory
     if not input_dir.exists():
@@ -295,6 +296,17 @@ Examples:
     asqp_dir = Path(args.asqp_output_dir) if args.asqp_output_dir else output_dir
     flightrecord_dir = Path(args.flightrecord_output_dir) if args.flightrecord_output_dir else output_dir
     bookableflight_dir = Path(args.bookableflight_output_dir) if args.bookableflight_output_dir else output_dir
+
+    # Validate that required output directories are specified
+    if args.format in ['asqp', 'both', 'all'] and asqp_dir is None:
+        print("Error: output_dir or --asqp-output-dir must be specified for ASQP format", file=sys.stderr)
+        return 1
+    if args.format in ['flightrecord', 'both', 'all'] and flightrecord_dir is None:
+        print("Error: output_dir or --flightrecord-output-dir must be specified for FlightRecord format", file=sys.stderr)
+        return 1
+    if args.format in ['bookableflight', 'all'] and bookableflight_dir is None:
+        print("Error: output_dir or --bookableflight-output-dir must be specified for BookableFlight format", file=sys.stderr)
+        return 1
 
     # Create output directories
     try:
